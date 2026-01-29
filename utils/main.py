@@ -541,18 +541,18 @@ class FlipkartSniper:
                 self.logger.warning(f"Could not extract product name: {e}")
 
         # Try to dismiss any potential location picker / overlay 
-        try:
-            # Clicking body helps clear some focus-based overlays
-            self.driver.find_element(By.TAG_NAME, "body").click()
-            time.sleep(0.5)
-            # Find and click cross/close buttons
-            close_buttons = self.driver.find_elements(By.XPATH, "//div[contains(@class,'close')] | //img[contains(@src,'cross')] | //div[text()='✕']")
-            for cb in close_buttons:
-                if cb.is_displayed():
-                    cb.click()
-                    time.sleep(0.5)
-        except:
-            pass
+        # try:
+        #     # Clicking body helps clear some focus-based overlays
+        #     self.driver.find_element(By.TAG_NAME, "body").click()
+        #     time.sleep(0.5)
+        #     # Find and click cross/close buttons
+        #     close_buttons = self.driver.find_elements(By.XPATH, "//div[contains(@class,'close')] | //img[contains(@src,'cross')] | //div[text()='✕']")
+        #     for cb in close_buttons:
+        #         if cb.is_displayed():
+        #             cb.click()
+        #             time.sleep(0.5)
+        # except:
+        #     pass
 
         # Click Add - comprehensive Grocery selectors
         add_button = None
