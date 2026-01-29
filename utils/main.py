@@ -198,7 +198,6 @@ class FlipkartSniper:
         # FIX: Allow geolocation automatically
         prefs = {
             "profile.default_content_setting_values.geolocation": 1,
-            "profile.managed_default_content_settings.images": 2, # Block images for speed/bandwidth
             "profile.default_content_settings.popups": 0,
         }
         self.options.add_experimental_option("prefs", prefs)
