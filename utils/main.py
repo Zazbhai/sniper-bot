@@ -573,10 +573,15 @@ class FlipkartSniper:
             
             # Scroll down to capture more context in screenshot
             try:
-                self.driver.execute_script("window.scrollBy(0, 300);")
-                time.sleep(1)
-            except:
-                pass
+                self.logger.info("Attempting scroll via PAGE_DOWN and JS...")
+                try:
+                    self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+                except:
+                    pass
+                self.driver.execute_script("window.scrollBy(0, 600);")
+                time.sleep(2)
+            except Exception as e:
+                self.logger.warning(f"Scroll failed: {e}")
                 
             # Capture debug screenshot before erroring
             try:
