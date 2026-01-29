@@ -569,8 +569,26 @@ class FlipkartSniper:
             time.sleep(1)
             self.logger.info("Add button clicked successfully")
         except Exception:
-            # Product "Add" button not present → treat as OOS
-            self.logger.error("Add button not found - product may be out of stock")
+            # Product "Add" button not present → treat as OOS, but capture better context first
+            self.logger.error("Add button not found - scrolling and preventing OOS misfire")
+            
+            # Scroll down to capture more context in screenshot
+            try:
+                self.driver.execute_script("window.scrollBy(0, 300);")
+                time.sleep(1)
+            except:
+                pass
+                
+            # Capture debug screenshot before erroring
+            try:
+                ts = int(time.time())
+                path = f"screenshots/PRODUCT_OOS_SCROLL_{ts}.png"
+                self.driver.save_screenshot(path)
+                url = FlipkartSniper.upload_screenshot_to_imgbb(path, FlipkartSniper.IMGBB_API_KEY)
+                self.logger.info(f"OOS Context Screenshot: {url}")
+            except:
+                pass
+
             self._fatal("PRODUCT_OUT_OF_STOCK")
 
         qty_xpath = "//div[contains(@class,'r-1cenzwm') and contains(@class,'r-1b43r93')]"
