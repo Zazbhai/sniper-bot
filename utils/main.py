@@ -531,15 +531,34 @@ class FlipkartSniper:
         time.sleep(1.5)
 
         # Get product name first
+        # Get product name with robust fallbacks
         try:
-            product_name_element = self.q(5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "div.css-1rynq56.r-8akbws.r-krxsd3.r-dnmrzs.r-1udh08x.r-1udbk01"))
-            )
-            product_name = product_name_element.text.strip()
+            # Try 1: Known robust classes
+            try:
+                product_name_element = self.driver.find_element(By.CSS_SELECTOR, "span.B_NuCI, h1.yhB1nd, h1")
+                product_name = product_name_element.text.strip()
+            except:
+                 # Try 2: The complex React class (original one) as a fallback
+                product_name_element = self.q(2).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.css-1rynq56.r-8akbws.r-krxsd3.r-dnmrzs.r-1udh08x.r-1udbk01"))
+                )
+                product_name = product_name_element.text.strip()
+            
             self.logger.info(f"Product Name: {product_name}")
         except Exception as e:
-            self.logger.warning(f"Could not extract product name: {e}")
-            product_name = "Unknown Product"
+            # Try 3: Last resort - generic non-empty h1
+            try:
+                 h1s = self.driver.find_elements(By.TAG_NAME, "h1")
+                 for h in h1s:
+                     if h.is_displayed() and len(h.text.strip()) > 5:
+                         product_name = h.text.strip()
+                         self.logger.info(f"Product Name (fallback): {product_name}")
+                         break
+                 else:
+                     raise Exception("No suitable h1 found")
+            except:
+                self.logger.warning(f"Could not extract product name: {e}")
+                product_name = "Unknown Product"
 
         # Click Add
         try:
