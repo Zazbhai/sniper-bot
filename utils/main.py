@@ -203,7 +203,7 @@ class FlipkartSniper:
         self.options.add_experimental_option("prefs", prefs)
 
         mobile_emulation = {
-            "deviceMetrics": {"width": 600, "height": 500, "pixelRatio": 2.0},
+            "deviceMetrics": {"width": 800, "height": 800, "pixelRatio": 2.0},
             "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
         }
         self.options.add_experimental_option("mobileEmulation", mobile_emulation)
@@ -211,23 +211,6 @@ class FlipkartSniper:
     # -----------------------
     # Fatal handler helper
     # -----------------------
-
-    IMGBB_API_KEY = "867820c7c2f074c1d1dc81daa8cf7daf"
-
-    @staticmethod
-    def upload_screenshot_to_imgbb(path, api_key):
-        try:
-            with open(path, "rb") as f:
-                res = requests.post(
-                    "https://api.imgbb.com/1/upload",
-                    data={"key": api_key},
-                    files={"image": f}
-                )
-            data = res.json()
-            return data["data"]["url"]
-        except Exception as e:
-            print("[IMG_UPLOAD] Failed:", e)
-            return None
 
 
     def _fatal(self, code):
@@ -250,15 +233,6 @@ class FlipkartSniper:
         except Exception as e:
             self.logger.error(f"Could not capture screenshot: {e}")
 
-        # Upload screenshot
-        url = FlipkartSniper.upload_screenshot_to_imgbb(
-            screenshot_path, FlipkartSniper.IMGBB_API_KEY
-        )
-        if url:
-            self.logger.log(f"Screenshot URL: {url}", "FATAL")
-        else:
-            self.logger.error("Screenshot upload failed")
-
         # Quit browser safely
         try:
             if self.driver:
@@ -267,11 +241,10 @@ class FlipkartSniper:
                 self.logger.log("Browser closed", "FATAL")
         except Exception as e:
             self.logger.error(f"Error closing browser: {e}")
-            # Even if quit fails, clear the reference to prevent further operations
             self.driver = None
 
         # Raise exception to stop execution immediately
-        raise FatalBotError(f"{code} | {url or 'NO_SCREENSHOT'}")
+        raise FatalBotError(code)
 
 
     # ------------------------------------------------------------------
@@ -324,12 +297,12 @@ class FlipkartSniper:
         for attempt in range(retries):
             try:
                 # Scroll into view first
-                self.driver.execute_script("arguments[0].scrollIntoView({block:'center', behavior:'smooth'});", element)
+                self.driver.execute_script("arguments[0].scrollIntoView({block:'center', behavior:'auto'});", element)
                 time.sleep(0.3)
                 
                 # Try JavaScript click first (most reliable)
                 self.driver.execute_script("arguments[0].click();", element)
-                time.sleep(0.2)
+                time.sleep(0.4)
                 return True
             except StaleElementReferenceException:
                 if attempt < retries - 1:
@@ -536,25 +509,27 @@ class FlipkartSniper:
     def step_add_single_product(self, product_url, desired_qty):
         self.logger.info(f"Adding product: {product_url} | Desired Qty: {desired_qty}")
         self.driver.get(product_url)
-        time.sleep(1.5)
+        
+        # Give page time to load and React components to settle (Grocery is slow)
+        time.sleep(3)
 
-        # Get product name first
         # Get product name with robust fallbacks
+        product_name = "Unknown Product"
         try:
-            # Try 1: Known robust classes
+            # wait briefly for any title element
+            name_selector = "span.B_NuCI, h1.yhB1nd, h1, div.css-1rynq56.r-8akbws.r-krxsd3"
             try:
-                product_name_element = self.driver.find_element(By.CSS_SELECTOR, "span.B_NuCI, h1.yhB1nd, h1")
+                product_name_element = self.driver.find_element(By.CSS_SELECTOR, name_selector)
                 product_name = product_name_element.text.strip()
             except:
-                 # Try 2: The complex React class (original one) as a fallback
-                product_name_element = self.q(2).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.css-1rynq56.r-8akbws.r-krxsd3.r-dnmrzs.r-1udh08x.r-1udbk01"))
-                )
+                # Fallback to the complex React class
+                product_name_element = self.driver.find_element(By.CSS_SELECTOR, "div.css-1rynq56.r-8akbws.r-krxsd3.r-dnmrzs.r-1udh08x.r-1udbk01")
                 product_name = product_name_element.text.strip()
             
             self.logger.info(f"Product Name: {product_name}")
+            # Give page one more second to settle before clicking critical buttons
+            time.sleep(1)
         except Exception as e:
-            # Try 3: Last resort - generic non-empty h1
             try:
                  h1s = self.driver.find_elements(By.TAG_NAME, "h1")
                  for h in h1s:
@@ -562,53 +537,96 @@ class FlipkartSniper:
                          product_name = h.text.strip()
                          self.logger.info(f"Product Name (fallback): {product_name}")
                          break
-                 else:
-                     raise Exception("No suitable h1 found")
             except:
                 self.logger.warning(f"Could not extract product name: {e}")
-                product_name = "Unknown Product"
 
-        # Click Add
+        # Try to dismiss any potential location picker / overlay 
         try:
-            self.logger.info("Clicking Add button...")
-            self.safe_click(self.q(5).until(
-                EC.element_to_be_clickable((By.XPATH, "//div[text()='Add']"))
-            ))
-            time.sleep(1)
+            # Clicking body helps clear some focus-based overlays
+            self.driver.find_element(By.TAG_NAME, "body").click()
+            time.sleep(0.5)
+            # Find and click cross/close buttons
+            close_buttons = self.driver.find_elements(By.XPATH, "//div[contains(@class,'close')] | //img[contains(@src,'cross')] | //div[text()='✕']")
+            for cb in close_buttons:
+                if cb.is_displayed():
+                    cb.click()
+                    time.sleep(0.5)
+        except:
+            pass
+
+        # Click Add - comprehensive Grocery selectors
+        add_button = None
+        add_xpaths = [
+            "//div[text()='Add']",
+            "//div[text()='ADD']",
+            "//div[normalize-space(text())='Add']",
+            "//div[normalize-space(text())='ADD']",
+            "//div[contains(text(), 'Add') and contains(@class, 'r-1777fci')]",
+            "//div[contains(text(), 'ADD') and contains(@class, 'r-1777fci')]",
+            "//div[normalize-space(text())='Add to cart' or normalize-space(text())='ADD TO CART']",
+            "//div[contains(@class, 'r-1m93j0t')]//div[text()='Add' or text()='ADD']",
+        ]
+
+        self.logger.info("Looking for Add button...")
+        for xpath in add_xpaths:
+            try:
+                btns = self.driver.find_elements(By.XPATH, xpath)
+                for btn in btns:
+                    if btn.is_displayed():
+                        add_button = btn
+                        break
+                if add_button: break
+            except: continue
+
+        # Recovery scroll attempt
+        if not add_button:
+            self.logger.info("Add button not found, performing recovery scroll...")
+            for scroll_amt in [400, 800]:
+                self.driver.execute_script(f"window.scrollBy(0, {scroll_amt});")
+                time.sleep(1)
+                for xpath in add_xpaths:
+                    try:
+                        btns = self.driver.find_elements(By.XPATH, xpath)
+                        for btn in btns:
+                            if btn.is_displayed():
+                                add_button = btn
+                                break
+                        if add_button: break
+                    except: continue
+                if add_button: break
+
+        try:
+            if not add_button:
+                raise NoSuchElementException("Add button not found")
+                
+            self.safe_click(add_button)
+            time.sleep(1.5)
             self.logger.info("Add button clicked successfully")
         except Exception:
-            # Product "Add" button not present → treat as OOS, but capture better context first
-            self.logger.error("Add button not found - scrolling and preventing OOS misfire")
+            # Product "Add" button not present → treat as OOS
+            self.logger.error("Add button not found - perform OOS debug scroll")
             
             # Scroll down to capture more context in screenshot
             try:
-                self.logger.info("Forcing scroll down to find Add button...")
-                # Method 1: JS Scroll
-                self.driver.execute_script("window.scrollTo(0, 500);") 
+                self.driver.execute_script("window.scrollTo(0, 1000);") 
                 time.sleep(0.5)
-                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                time.sleep(1)
-                
-                # Method 2: Keys (more reliable if JS blocked/ignored)
+                # Physical keys
                 try:
                     body = self.driver.find_element(By.TAG_NAME, "body")
-                    body.click() # Focus
-                    for _ in range(3):
+                    body.click()
+                    for _ in range(5):
                         body.send_keys(Keys.PAGE_DOWN)
-                        time.sleep(0.3)
-                except:
-                    pass
-            except Exception as e:
-                self.logger.warning(f"Scroll failed: {e}")
+                        time.sleep(0.2)
+                except: pass
+            except Exception: pass
                 
-            # Capture debug screenshot before erroring
+            # Local screenshot
             try:
                 ts = int(time.time())
                 path = f"screenshots/PRODUCT_OOS_SCROLL_{ts}.png"
                 self.driver.save_screenshot(path)
                 self.logger.info(f"OOS Context Screenshot saved at: {path}")
-            except:
-                pass
+            except: pass
 
             self._fatal("PRODUCT_OUT_OF_STOCK")
 
