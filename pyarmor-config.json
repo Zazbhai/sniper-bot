@@ -1,0 +1,19 @@
+{
+  "new": "flipkart_sniper",
+  "src": ".",
+  "entry": "utils/app.py",
+  "manifest": {
+    "include": [
+      "utils/*.py",
+      "utils/*",
+      "templates/*",
+      "files/*",
+      "uploads/*",
+      "download/*",
+      "screenshots/*"
+    ]
+  },
+  "restrict": "1",
+  "obf_code": "2",
+  "mix_str": "1"
+}

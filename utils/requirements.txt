@@ -1,0 +1,5 @@
+selenium
+flask
+requests
+imaplib2
+psycopg2-binary

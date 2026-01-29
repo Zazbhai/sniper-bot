@@ -1,0 +1,218 @@
+=== Bot Session Started: 2026-01-28 23:47:17 ===
+[2026-01-28 23:47:18] [INFO] ℹ️ OTP not received yet (attempt 3/14), retrying...
+[2026-01-28 23:47:18] [INFO] ℹ️ OTP not received yet (attempt 5/14), retrying...
+[2026-01-28 23:47:18] [INFO] ℹ️ OTP not received yet (attempt 1/14), retrying...
+[2026-01-28 23:47:18] [STEP] 🚀 STEP: LOGIN - STARTED
+[2026-01-28 23:47:27] [INFO] ℹ️ OTP not received yet (attempt 6/14), retrying...
+[2026-01-28 23:47:27] [INFO] ℹ️ OTP not received yet (attempt 4/14), retrying...
+[2026-01-28 23:47:30] [INFO] ℹ️ OTP not received yet (attempt 7/14), retrying...
+[2026-01-28 23:47:31] [INFO] ℹ️ OTP not received yet (attempt 5/14), retrying...
+[2026-01-28 23:47:31] [INFO] ℹ️ OTP not received yet (attempt 2/14), retrying...
+[2026-01-28 23:47:33] [INFO] ℹ️ Entered login ID: flipkart19@husan.shop
+[2026-01-28 23:47:34] [INFO] ℹ️ OTP not received yet (attempt 8/14), retrying...
+[2026-01-28 23:47:34] [INFO] ℹ️ Waiting for Flipkart OTP via email...
+[2026-01-28 23:47:34] [INFO] ℹ️ OTP not received yet (attempt 6/14), retrying...
+[2026-01-28 23:47:35] [INFO] ℹ️ OTP not received yet (attempt 3/14), retrying...
+[2026-01-28 23:47:36] [INFO] ℹ️ OTP not received yet (attempt 1/14), retrying...
+[2026-01-28 23:47:37] [SUCCESS] ✅ Got OTP: 871392
+[2026-01-28 23:47:38] [STEP] ✅ STEP: LOGIN - SUCCESS
+[2026-01-28 23:47:39] [STEP] 🚀 STEP: ADDRESS - STARTED
+[2026-01-28 23:47:39] [INFO] ℹ️ Navigating to address page...
+[2026-01-28 23:47:40] [INFO] ℹ️ OTP not received yet (attempt 4/14), retrying...
+[2026-01-28 23:47:41] [INFO] ℹ️ OTP not received yet (attempt 2/14), retrying...
+[2026-01-28 23:47:41] [INFO] ℹ️ OTP not received yet (attempt 7/14), retrying...
+[2026-01-28 23:47:43] [INFO] ℹ️ OTP not received yet (attempt 5/14), retrying...
+[2026-01-28 23:47:44] [INFO] ℹ️ OTP not received yet (attempt 3/14), retrying...
+[2026-01-28 23:47:44] [SUCCESS] ✅ Got OTP: 623225
+[2026-01-28 23:47:45] [STEP] ✅ STEP: LOGIN - SUCCESS
+[2026-01-28 23:47:46] [STEP] 🚀 STEP: ADDRESS - STARTED
+[2026-01-28 23:47:46] [INFO] ℹ️ Navigating to address page...
+[2026-01-28 23:47:46] [SUCCESS] ✅ Got OTP: 975742
+[2026-01-28 23:47:47] [INFO] ℹ️ OTP not received yet (attempt 4/14), retrying...
+[2026-01-28 23:47:47] [STEP] ✅ STEP: LOGIN - SUCCESS
+[2026-01-28 23:47:48] [STEP] 🚀 STEP: ADDRESS - STARTED
+[2026-01-28 23:47:48] [INFO] ℹ️ Navigating to address page...
+[2026-01-28 23:47:52] [INFO] ℹ️ Dismissed cancel button if present
+[2026-01-28 23:47:52] [INFO] ℹ️ Filling name: mana ji
+[2026-01-28 23:47:52] [INFO] ℹ️ Filling phone: 9842086983
+[2026-01-28 23:47:52] [INFO] ℹ️ Filling pincode: 636002
+[2026-01-28 23:47:52] [INFO] ℹ️ Filling address line 1: baazar street
+[2026-01-28 23:47:52] [INFO] ℹ️ Filling address line 2: vkm complex shevapet 
+[2026-01-28 23:47:55] [INFO] ℹ️ Clicking Save Address button...
+[2026-01-28 23:47:56] [STEP] ✅ STEP: ADDRESS - SUCCESS
+[2026-01-28 23:47:57] [INFO] ℹ️ OTP not received yet (attempt 5/14), retrying...
+[2026-01-28 23:47:57] [STEP] 🚀 STEP: CLEAR_CART - STARTED
+[2026-01-28 23:47:57] [INFO] ℹ️ Navigating to cart page...
+[2026-01-28 23:48:00] [INFO] ℹ️ OTP not received yet (attempt 6/14), retrying...
+[2026-01-28 23:48:01] [INFO] ℹ️ Dismissed cancel button if present
+[2026-01-28 23:48:01] [INFO] ℹ️ Filling name: mana ji
+[2026-01-28 23:48:01] [INFO] ℹ️ Filling phone: 9842086983
+[2026-01-28 23:48:01] [INFO] ℹ️ Filling pincode: 636002
+[2026-01-28 23:48:01] [INFO] ℹ️ Filling address line 1: baazar street
+[2026-01-28 23:48:02] [INFO] ℹ️ Filling address line 2: vkm complex shevapet 
+[2026-01-28 23:48:02] [INFO] ℹ️ Dismissed cancel button if present
+[2026-01-28 23:48:02] [INFO] ℹ️ Filling name: mana ji
+[2026-01-28 23:48:02] [INFO] ℹ️ Filling phone: 9842086983
+[2026-01-28 23:48:02] [INFO] ℹ️ Filling pincode: 636002
+[2026-01-28 23:48:02] [INFO] ℹ️ Filling address line 1: baazar street
+[2026-01-28 23:48:02] [INFO] ℹ️ OTP not received yet (attempt 7/14), retrying...
+[2026-01-28 23:48:02] [INFO] ℹ️ Filling address line 2: vkm complex shevapet 
+[2026-01-28 23:48:04] [INFO] ℹ️ Clicking Save Address button...
+[2026-01-28 23:48:05] [INFO] ℹ️ Clicking Save Address button...
+[2026-01-28 23:48:05] [INFO] ℹ️ OTP not received yet (attempt 8/14), retrying...
+[2026-01-28 23:48:06] [STEP] ✅ STEP: ADDRESS - SUCCESS
+[2026-01-28 23:48:07] [STEP] ✅ STEP: ADDRESS - SUCCESS
+[2026-01-28 23:48:07] [STEP] 🚀 STEP: CLEAR_CART - STARTED
+[2026-01-28 23:48:07] [INFO] ℹ️ Navigating to cart page...
+[2026-01-28 23:48:08] [STEP] 🚀 STEP: CLEAR_CART - STARTED
+[2026-01-28 23:48:08] [INFO] ℹ️ Navigating to cart page...
+[2026-01-28 23:48:08] [INFO] ℹ️ OTP not received yet (attempt 9/14), retrying...
+[2026-01-28 23:48:10] [INFO] ℹ️ Cart is already empty
+[2026-01-28 23:48:10] [STEP] ✅ STEP: CLEAR_CART - SUCCESS
+[2026-01-28 23:48:10] [STEP] 🚀 STEP: ADD_PRODUCTS - STARTED
+[2026-01-28 23:48:10] [INFO] ℹ️ Adding 1 product(s) to cart...
+[2026-01-28 23:48:10] [INFO] ℹ️ 
+[PRODUCT 1/1]
+[2026-01-28 23:48:10] [INFO] ℹ️ Adding product: https://fktr.in/nu8fHi7 | Desired Qty: 1
+[2026-01-28 23:48:11] [INFO] ℹ️ OTP not received yet (attempt 10/14), retrying...
+[2026-01-28 23:48:13] [SUCCESS] ✅ Got OTP: 918137
+[2026-01-28 23:48:13] [INFO] ℹ️ Product Name: CINTHOL Original Soap. (4 x 150 g)
+[2026-01-28 23:48:13] [INFO] ℹ️ Clicking Add button...
+[2026-01-28 23:48:14] [STEP] ✅ STEP: LOGIN - SUCCESS
+[2026-01-28 23:48:15] [STEP] 🚀 STEP: ADDRESS - STARTED
+[2026-01-28 23:48:15] [INFO] ℹ️ Navigating to address page...
+[2026-01-28 23:48:15] [INFO] ℹ️ Add button clicked successfully
+[2026-01-28 23:48:15] [INFO] ℹ️ Quantity OK: 1/1
+[2026-01-28 23:48:15] [SUCCESS] ✅ FINAL QUANTITY: 1/1 - SUCCESS
+[2026-01-28 23:48:17] [INFO] ℹ️ All products added, navigating to cart...
+[2026-01-28 23:48:17] [INFO] ℹ️ Clicking basket icon...
+[2026-01-28 23:48:17] [INFO] ℹ️ Basket icon clicked successfully
+[2026-01-28 23:48:18] [INFO] ℹ️ Cart is already empty
+[2026-01-28 23:48:18] [STEP] ✅ STEP: CLEAR_CART - SUCCESS
+[2026-01-28 23:48:18] [STEP] 🚀 STEP: ADD_PRODUCTS - STARTED
+[2026-01-28 23:48:18] [INFO] ℹ️ Adding 1 product(s) to cart...
+[2026-01-28 23:48:18] [INFO] ℹ️ 
+[PRODUCT 1/1]
+[2026-01-28 23:48:18] [INFO] ℹ️ Adding product: https://fktr.in/nu8fHi7 | Desired Qty: 1
+[2026-01-28 23:48:19] [INFO] ℹ️ Cart is already empty
+[2026-01-28 23:48:19] [STEP] ✅ STEP: CLEAR_CART - SUCCESS
+[2026-01-28 23:48:19] [STEP] 🚀 STEP: ADD_PRODUCTS - STARTED
+[2026-01-28 23:48:19] [INFO] ℹ️ Adding 1 product(s) to cart...
+[2026-01-28 23:48:19] [INFO] ℹ️ 
+[PRODUCT 1/1]
+[2026-01-28 23:48:19] [INFO] ℹ️ Adding product: https://fktr.in/nu8fHi7 | Desired Qty: 1
+[2026-01-28 23:48:19] [STEP] ✅ STEP: ADD_PRODUCTS - SUCCESS
+[2026-01-28 23:48:19] [STEP] 🚀 STEP: CHECKOUT - STARTED
+[2026-01-28 23:48:19] [INFO] ℹ️ Skipping back to cart (no coupon filled).
+[2026-01-28 23:48:21] [INFO] ℹ️ CONTINUE clicked
+[2026-01-28 23:48:21] [INFO] ℹ️ Product Name: CINTHOL Original Soap. (4 x 150 g)
+[2026-01-28 23:48:21] [INFO] ℹ️ Clicking Add button...
+[2026-01-28 23:48:23] [INFO] ℹ️ Add button clicked successfully
+[2026-01-28 23:48:23] [INFO] ℹ️ Quantity OK: 1/1
+[2026-01-28 23:48:23] [SUCCESS] ✅ FINAL QUANTITY: 1/1 - SUCCESS
+[2026-01-28 23:48:23] [INFO] ℹ️ Second Continue clicked
+[2026-01-28 23:48:24] [INFO] ℹ️ Price validation: 250 (max: 1300)
+[2026-01-28 23:48:24] [INFO] ℹ️ COD selected
+[2026-01-28 23:48:25] [INFO] ℹ️ All products added, navigating to cart...
+[2026-01-28 23:48:25] [INFO] ℹ️ Clicking basket icon...
+[2026-01-28 23:48:25] [INFO] ℹ️ Basket icon clicked successfully
+[2026-01-28 23:48:27] [STEP] ✅ STEP: ADD_PRODUCTS - SUCCESS
+[2026-01-28 23:48:27] [STEP] 🚀 STEP: CHECKOUT - STARTED
+[2026-01-28 23:48:27] [INFO] ℹ️ Skipping back to cart (no coupon filled).
+[2026-01-28 23:48:28] [INFO] ℹ️ Place Order clicked
+[2026-01-28 23:48:30] [INFO] ℹ️ CONTINUE clicked
+[2026-01-28 23:48:32] [INFO] ℹ️ Confirm order clicked
+[2026-01-28 23:48:32] [INFO] ℹ️ Second Continue clicked
+[2026-01-28 23:48:33] [INFO] ℹ️ Price validation: 250 (max: 1300)
+[2026-01-28 23:48:34] [INFO] ℹ️ COD selected
+[2026-01-28 23:48:37] [INFO] ℹ️ Place Order clicked
+[2026-01-28 23:48:37] [INFO] ℹ️ Dismissed cancel button if present
+[2026-01-28 23:48:37] [INFO] ℹ️ Filling name: mana ji
+[2026-01-28 23:48:37] [INFO] ℹ️ Filling phone: 9842086983
+[2026-01-28 23:48:38] [INFO] ℹ️ Filling pincode: 636002
+[2026-01-28 23:48:38] [INFO] ℹ️ Filling address line 1: baazar street
+[2026-01-28 23:48:38] [INFO] ℹ️ Filling address line 2: vkm complex shevapet 
+[2026-01-28 23:48:40] [INFO] ℹ️ Clicking Save Address button...
+[2026-01-28 23:48:41] [INFO] ℹ️ Confirm order clicked
+[2026-01-28 23:48:42] [STEP] ✅ STEP: ADDRESS - SUCCESS
+[2026-01-28 23:48:43] [STEP] 🚀 STEP: CLEAR_CART - STARTED
+[2026-01-28 23:48:43] [INFO] ℹ️ Navigating to cart page...
+[2026-01-28 23:48:50] [INFO] ℹ️ Product Name: CINTHOL Original Soap. (4 x 150 g)
+[2026-01-28 23:48:50] [INFO] ℹ️ Clicking Add button...
+[2026-01-28 23:48:52] [INFO] ℹ️ Add button clicked successfully
+[2026-01-28 23:48:52] [INFO] ℹ️ Quantity OK: 1/1
+[2026-01-28 23:48:52] [SUCCESS] ✅ FINAL QUANTITY: 1/1 - SUCCESS
+[2026-01-28 23:48:54] [INFO] ℹ️ All products added, navigating to cart...
+[2026-01-28 23:48:54] [INFO] ℹ️ Clicking basket icon...
+[2026-01-28 23:48:55] [INFO] ℹ️ Basket icon clicked successfully
+[2026-01-28 23:48:55] [INFO] ℹ️ Cart is already empty
+[2026-01-28 23:48:55] [STEP] ✅ STEP: CLEAR_CART - SUCCESS
+[2026-01-28 23:48:55] [STEP] 🚀 STEP: ADD_PRODUCTS - STARTED
+[2026-01-28 23:48:55] [INFO] ℹ️ Adding 1 product(s) to cart...
+[2026-01-28 23:48:55] [INFO] ℹ️ 
+[PRODUCT 1/1]
+[2026-01-28 23:48:55] [INFO] ℹ️ Adding product: https://fktr.in/nu8fHi7 | Desired Qty: 1
+[2026-01-28 23:48:57] [STEP] ✅ STEP: ADD_PRODUCTS - SUCCESS
+[2026-01-28 23:48:57] [STEP] 🚀 STEP: CHECKOUT - STARTED
+[2026-01-28 23:48:57] [INFO] ℹ️ Skipping back to cart (no coupon filled).
+[2026-01-28 23:48:58] [INFO] ℹ️ CONTINUE clicked
+[2026-01-28 23:49:00] [INFO] ℹ️ Second Continue clicked
+[2026-01-28 23:49:01] [INFO] ℹ️ Price validation: 250 (max: 1300)
+[2026-01-28 23:49:01] [INFO] ℹ️ COD selected
+[2026-01-28 23:49:05] [INFO] ℹ️ Place Order clicked
+[2026-01-28 23:49:07] [ERROR] ❌ Element not found (xpaths tried: 4)
+[2026-01-28 23:49:07] [FATAL] 💀 FATAL: ORDER_ID_EXTRACTION_FAILED → STOPPING BOT IMMEDIATELY
+[2026-01-28 23:49:07] [FATAL] ============================================================
+[2026-01-28 23:49:07] [FATAL] Screenshot saved: screenshots/ORDER_ID_EXTRACTION_FAILED_1769624347.png
+[2026-01-28 23:49:09] [INFO] ℹ️ Confirm order clicked
+[2026-01-28 23:49:10] [FATAL] Screenshot URL: https://i.ibb.co/ycP3yvBG/ORDER-ID-EXTRACTION-FAILED-1769624347.png
+[2026-01-28 23:49:12] [FATAL] Browser closed
+[2026-01-28 23:49:12] [WARNING] ⚠️ Orders page is open but order ID extraction failed. Marking as success.
+[2026-01-28 23:49:12] [ERROR] ❌ Could not capture/upload screenshot: 'NoneType' object has no attribute 'save_screenshot'
+[2026-01-28 23:49:12] [STEP] ✅ STEP: CHECKOUT - SUCCESS
+[2026-01-28 23:49:21] [ERROR] ❌ Element not found (xpaths tried: 4)
+[2026-01-28 23:49:21] [FATAL] 💀 FATAL: ORDER_ID_EXTRACTION_FAILED → STOPPING BOT IMMEDIATELY
+[2026-01-28 23:49:21] [FATAL] ============================================================
+[2026-01-28 23:49:21] [FATAL] Screenshot saved: screenshots/ORDER_ID_EXTRACTION_FAILED_1769624361.png
+[2026-01-28 23:49:25] [FATAL] Screenshot URL: https://i.ibb.co/7x8nTfyk/ORDER-ID-EXTRACTION-FAILED-1769624361.png
+[2026-01-28 23:49:27] [INFO] ℹ️ Product Name: CINTHOL Original Soap. (4 x 150 g)
+[2026-01-28 23:49:27] [INFO] ℹ️ Clicking Add button...
+[2026-01-28 23:49:27] [FATAL] Browser closed
+[2026-01-28 23:49:27] [WARNING] ⚠️ Orders page is open but order ID extraction failed. Marking as success.
+[2026-01-28 23:49:27] [ERROR] ❌ Could not capture/upload screenshot: 'NoneType' object has no attribute 'save_screenshot'
+[2026-01-28 23:49:27] [STEP] ✅ STEP: CHECKOUT - SUCCESS
+[2026-01-28 23:49:28] [INFO] ℹ️ Add button clicked successfully
+[2026-01-28 23:49:28] [INFO] ℹ️ Quantity OK: 1/1
+[2026-01-28 23:49:28] [SUCCESS] ✅ FINAL QUANTITY: 1/1 - SUCCESS
+[2026-01-28 23:49:30] [INFO] ℹ️ All products added, navigating to cart...
+[2026-01-28 23:49:30] [INFO] ℹ️ Clicking basket icon...
+[2026-01-28 23:49:31] [INFO] ℹ️ Basket icon clicked successfully
+[2026-01-28 23:49:33] [STEP] ✅ STEP: ADD_PRODUCTS - SUCCESS
+[2026-01-28 23:49:33] [STEP] 🚀 STEP: CHECKOUT - STARTED
+[2026-01-28 23:49:33] [INFO] ℹ️ Skipping back to cart (no coupon filled).
+[2026-01-28 23:49:34] [INFO] ℹ️ CONTINUE clicked
+[2026-01-28 23:49:36] [INFO] ℹ️ Second Continue clicked
+[2026-01-28 23:49:37] [INFO] ℹ️ Price validation: 250 (max: 1300)
+[2026-01-28 23:49:37] [INFO] ℹ️ COD selected
+[2026-01-28 23:49:41] [ERROR] ❌ Element not found (xpaths tried: 4)
+[2026-01-28 23:49:41] [FATAL] 💀 FATAL: ORDER_ID_EXTRACTION_FAILED → STOPPING BOT IMMEDIATELY
+[2026-01-28 23:49:41] [FATAL] ============================================================
+[2026-01-28 23:49:41] [FATAL] Screenshot saved: screenshots/ORDER_ID_EXTRACTION_FAILED_1769624381.png
+[2026-01-28 23:49:41] [INFO] ℹ️ Place Order clicked
+[2026-01-28 23:49:44] [FATAL] Screenshot URL: https://i.ibb.co/7t6t67zT/ORDER-ID-EXTRACTION-FAILED-1769624381.png
+[2026-01-28 23:49:45] [INFO] ℹ️ Confirm order clicked
+[2026-01-28 23:49:46] [FATAL] Browser closed
+[2026-01-28 23:49:46] [WARNING] ⚠️ Orders page is open but order ID extraction failed. Marking as success.
+[2026-01-28 23:49:46] [ERROR] ❌ Could not capture/upload screenshot: 'NoneType' object has no attribute 'save_screenshot'
+[2026-01-28 23:49:46] [STEP] ✅ STEP: CHECKOUT - SUCCESS
+[2026-01-28 23:50:17] [ERROR] ❌ Element not found (xpaths tried: 4)
+[2026-01-28 23:50:17] [FATAL] 💀 FATAL: ORDER_ID_EXTRACTION_FAILED → STOPPING BOT IMMEDIATELY
+[2026-01-28 23:50:17] [FATAL] ============================================================
+[2026-01-28 23:50:18] [FATAL] Screenshot saved: screenshots/ORDER_ID_EXTRACTION_FAILED_1769624417.png
+[2026-01-28 23:50:20] [FATAL] Screenshot URL: https://i.ibb.co/k6mM39KV/ORDER-ID-EXTRACTION-FAILED-1769624417.png
+[2026-01-28 23:50:22] [FATAL] Browser closed
+[2026-01-28 23:50:22] [WARNING] ⚠️ Orders page is open but order ID extraction failed. Marking as success.
+[2026-01-28 23:50:22] [ERROR] ❌ Could not capture/upload screenshot: 'NoneType' object has no attribute 'save_screenshot'
+[2026-01-28 23:50:22] [STEP] ✅ STEP: CHECKOUT - SUCCESS
+📊 Results: 4 success, 0 failed, 1 order IDs, 0 stock warnings
+✔ Bot finished

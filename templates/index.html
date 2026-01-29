@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sniper Control Panel</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 2rem; background: #f4f7f6; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1, h2 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        form { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        fieldset { border: 1px solid #ddd; border-radius: 4px; padding: 1.5rem; }
+        legend { font-weight: 600; font-size: 1.1rem; color: #007bff; }
+        label { display: block; font-weight: 500; margin-bottom: 5px; color: #555; }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%; padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        textarea { min-height: 150px; font-family: monospace; }
+        button {
+            background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; font-size: 1.1rem;
+            cursor: pointer; font-weight: 600; transition: background 0.2s;
+        }
+        button:hover { background: #0056b3; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; }
+        input[type="checkbox"] { width: auto; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; font-weight: 500; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .status { font-size: 1.2rem; text-align: center; padding: 1rem; background: #eee; border-radius: 4px; }
+        .status-running { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sniper Control Panel</h1>
+        
+        <div class="status {{ 'status-running' if status == 'Running...' else '' }}">
+            <strong>Status:</strong> {{ status }}
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="/run" method="POST">
+            
+            <fieldset>
+                <legend>🎯 Products</legend>
+                <label for="products">Products (URL,Quantity per line)</label>
+                <textarea id="products" name="products" required placeholder="https://fktr.in/3sCjSF4, 2&#10;https://fktr.in/another, 1"></textarea>
+            </fieldset>
+
+            <fieldset>
+                <legend>⚙️ Run Configuration</legend>
+                
+                <label for="count_limit">Number of Accounts to Use (Count Limit)</label>
+                <input type="number" id="count_limit" name="count_limit" value="1" min="1" required>
+                
+                <label for="max_price">Max Price (₹)</label>
+                <input type="number" id="max_price" name="max_price" value="9999" min="1" required>
+
+                <label for="deal_keyword">Deal Keyword (e.g., 'Tide')</label>
+                <input type="text" id="deal_keyword" name="deal_keyword" placeholder="Leave empty for no keyword">
+
+                <label for="max_parallel">Max Parallel Processes</label>
+                <input type="number" id="max_parallel" name="max_parallel" value="4" min="1" required>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="toggle_retry" name="toggle_retry" value="true">
+                    <label for="toggle_retry" style="margin: 0;">Retry Failed Accounts?</label>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>🚚 Default Address (if missing from mail.txt)</legend>
+                
+                <label for="default_name">Default Name</label>
+                <input type="text" id="default_name" name="default_name" value="Rahul Kumar">
+
+                <label for="default_phone">Default Phone</label>
+                <input type="text" id="default_phone" name="default_phone" value="9303530519">
+
+                <label for="default_pincode">Default Pincode</label>
+                <input type="text" id="default_pincode" name="default_pincode" value="842001">
+
+                <label for="default_addr1">Default Address 1</label>
+                <input type="text" id="default_addr1" name="default_addr1" value="Near Durga Mandir">
+
+                <label for="default_addr2">Default Address 2</label>
+                <input type="text" id="default_addr2" name="default_addr2" value="Ward 12">
+            </fieldset>
+
+            <button type="submit">🚀 Start Run</button>
+        </form>
+    </div>
+</body>
+</html>
