@@ -445,8 +445,7 @@ class FlipkartSniper:
             ts = int(time.time())
             path = f"screenshots/address_debug_{ts}.png"
             self.driver.save_screenshot(path)
-            url = FlipkartSniper.upload_screenshot_to_imgbb(path, FlipkartSniper.IMGBB_API_KEY)
-            self.logger.info(f"Address Debug Screenshot: {url}")
+            self.logger.info(f"Address Debug Screenshot saved at: {path}")
         except:
             pass
 
@@ -583,13 +582,22 @@ class FlipkartSniper:
             
             # Scroll down to capture more context in screenshot
             try:
-                self.logger.info("Attempting scroll via PAGE_DOWN and JS...")
+                self.logger.info("Forcing scroll down to find Add button...")
+                # Method 1: JS Scroll
+                self.driver.execute_script("window.scrollTo(0, 500);") 
+                time.sleep(0.5)
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(1)
+                
+                # Method 2: Keys (more reliable if JS blocked/ignored)
                 try:
-                    self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+                    body = self.driver.find_element(By.TAG_NAME, "body")
+                    body.click() # Focus
+                    for _ in range(3):
+                        body.send_keys(Keys.PAGE_DOWN)
+                        time.sleep(0.3)
                 except:
                     pass
-                self.driver.execute_script("window.scrollBy(0, 600);")
-                time.sleep(2)
             except Exception as e:
                 self.logger.warning(f"Scroll failed: {e}")
                 
@@ -598,8 +606,7 @@ class FlipkartSniper:
                 ts = int(time.time())
                 path = f"screenshots/PRODUCT_OOS_SCROLL_{ts}.png"
                 self.driver.save_screenshot(path)
-                url = FlipkartSniper.upload_screenshot_to_imgbb(path, FlipkartSniper.IMGBB_API_KEY)
-                self.logger.info(f"OOS Context Screenshot: {url}")
+                self.logger.info(f"OOS Context Screenshot saved at: {path}")
             except:
                 pass
 
