@@ -440,6 +440,16 @@ class FlipkartSniper:
         time.sleep(1.3)
         self.logger.step("ADDRESS", "SUCCESS")
 
+        # Debug screenshot after address save
+        try:
+            ts = int(time.time())
+            path = f"screenshots/address_debug_{ts}.png"
+            self.driver.save_screenshot(path)
+            url = FlipkartSniper.upload_screenshot_to_imgbb(path, FlipkartSniper.IMGBB_API_KEY)
+            self.logger.info(f"Address Debug Screenshot: {url}")
+        except:
+            pass
+
     # ------------------------------------------------------------------
     # Clear cart
     # ------------------------------------------------------------------
