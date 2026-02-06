@@ -17,7 +17,25 @@ from functools import wraps
 import time
 import os
 import logging
+import logging
 from datetime import datetime
+import threading
+
+# Load Environment Variables from .env file (Custom implementation to avoid dependency)
+def load_env_file():
+    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'): continue
+                if '=' in line:
+                    key, val = line.split('=', 1)
+                    # Only set if not already set (don't override system envs)
+                    if key.strip() not in os.environ:
+                        os.environ[key.strip()] = val.strip()
+
+load_env_file()
 import socket
 import time
 import sys
@@ -4760,7 +4778,7 @@ input[type="checkbox"], input[type="radio"] {
                 <small style="color: var(--text); opacity: 0.7; font-size: 0.85em; display: block; margin-top: 5px;">If matching product not found, you'll be prompted to select from available deals</small>
 
                 <label class="form-label" style="margin-top: 15px;">Screenshot Domain</label>
-                <input type="text" name="screenshot_domain" placeholder="e.g. husan.shop (Public IP/Domain for screenshots)">
+                <input type="text" name="screenshot_domain" value="{{ screenshot_domain }}" placeholder="e.g. husan.shop (Public IP/Domain for screenshots)">
                 <small style="color: var(--text); opacity: 0.7; font-size: 0.85em; display: block; margin-top: 5px;">Leave empty to auto-detect. Used to generate clickable screenshot links.</small>
 
                 <div style="margin-top: 20px; padding: 15px; background: var(--card); border-radius: 10px; border: 2px solid var(--border);">
@@ -7962,7 +7980,8 @@ def index():
         fail_exists=os.path.exists(FAILURE_CSV),
         used_coupon_exists=os.path.exists(USED_COUPON_FILE),
         used_mail_exists=os.path.exists(USED_MAIL_FILE),
-        local_ip=get_local_ip()
+        local_ip=get_local_ip(),
+        screenshot_domain=os.environ.get("SCREENSHOT_DOMAIN", "")
     )
 
 
