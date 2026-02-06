@@ -281,6 +281,7 @@ class FlipkartSniper:
         
         # Resource optimization
         self.options.add_argument("--disable-extensions")
+        self.options.add_argument("--headless=new")
         self.options.add_argument("--disable-background-networking")
         self.options.add_argument("--disable-background-timer-throttling")
         self.options.add_argument("--disable-renderer-backgrounding")
@@ -661,11 +662,7 @@ class FlipkartSniper:
                 time.sleep(3)
         
         # Give page time to load and React components to settle (Grocery is slow)
-        time.sleep(4.5)
-        try:
-             self.driver.execute_script("window.scrollBy(0, 300);")
-        except: pass
-        time.sleep(1.5)
+        time.sleep(3)
 
         # Get product name with robust fallbacks
         product_name = "Unknown Product"
@@ -722,6 +719,7 @@ class FlipkartSniper:
         ]
 
         self.logger.info("Looking for Add button...")
+        time.sleep(1.0) # Brief pause before search
         for xpath in add_xpaths:
             try:
                 btns = self.driver.find_elements(By.XPATH, xpath)
@@ -752,9 +750,15 @@ class FlipkartSniper:
         try:
             if not add_button:
                 raise NoSuchElementException("Add button not found")
+            
+            # Explicit scroll + pause before clicking (Critical for VPS)
+            try:
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", add_button)
+                time.sleep(1.0)
+            except: pass
                 
             self.safe_click(add_button)
-            time.sleep(1.5)
+            time.sleep(2.5) # Increased wait for 'Add' -> 'Qty' transition
             self.logger.info("Add button clicked successfully")
         except Exception:
             # Product "Add" button not present → treat as OOS
@@ -827,30 +831,15 @@ class FlipkartSniper:
 
                 # Try to increase quantity
                 increase_count = 0
-                increase_btn_xpaths = [
-                    "(//div[contains(@style,'rgb(133, 60, 14)')])[last()]",
-                    "//div[text()='+']", 
-                    "//button[text()='+']",
-                    "//div[text()='+' and contains(@class, 'r-')]"
-                ]
-                
                 for _ in range(missing):
-                    clicked_inc = False
-                    for xpath in increase_btn_xpaths:
-                        try:
-                            # Reduced wait time since we try multiple paths
-                            btn = self.q(1).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-                            self.safe_click(btn)
-                            time.sleep(0.8)
-                            increase_count += 1
-                            clicked_inc = True
-                            break
-                        except Exception:
-                            continue
-                    
-                    if not clicked_inc:
+                    try:
+                        btn = self.q(2).until(EC.element_to_be_clickable((By.XPATH, increase_btn_xpath)))
+                        self.safe_click(btn)
+                        time.sleep(0.8)
+                        increase_count += 1
+                    except Exception:
                         # If + button disappears or isn't clickable then product can't be increased further
-                        self.logger.warning("Could not increase quantity further - reached maximum available or button not found")
+                        self.logger.warning("Could not increase quantity further - reached maximum available")
                         break
 
                 # Read the quantity after attempting to increase
