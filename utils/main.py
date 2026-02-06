@@ -661,7 +661,11 @@ class FlipkartSniper:
                 time.sleep(3)
         
         # Give page time to load and React components to settle (Grocery is slow)
-        time.sleep(3)
+        time.sleep(4.5)
+        try:
+             self.driver.execute_script("window.scrollBy(0, 300);")
+        except: pass
+        time.sleep(1.5)
 
         # Get product name with robust fallbacks
         product_name = "Unknown Product"
@@ -823,15 +827,30 @@ class FlipkartSniper:
 
                 # Try to increase quantity
                 increase_count = 0
+                increase_btn_xpaths = [
+                    "(//div[contains(@style,'rgb(133, 60, 14)')])[last()]",
+                    "//div[text()='+']", 
+                    "//button[text()='+']",
+                    "//div[text()='+' and contains(@class, 'r-')]"
+                ]
+                
                 for _ in range(missing):
-                    try:
-                        btn = self.q(2).until(EC.element_to_be_clickable((By.XPATH, increase_btn_xpath)))
-                        self.safe_click(btn)
-                        time.sleep(0.8)
-                        increase_count += 1
-                    except Exception:
+                    clicked_inc = False
+                    for xpath in increase_btn_xpaths:
+                        try:
+                            # Reduced wait time since we try multiple paths
+                            btn = self.q(1).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                            self.safe_click(btn)
+                            time.sleep(0.8)
+                            increase_count += 1
+                            clicked_inc = True
+                            break
+                        except Exception:
+                            continue
+                    
+                    if not clicked_inc:
                         # If + button disappears or isn't clickable then product can't be increased further
-                        self.logger.warning("Could not increase quantity further - reached maximum available")
+                        self.logger.warning("Could not increase quantity further - reached maximum available or button not found")
                         break
 
                 # Read the quantity after attempting to increase
