@@ -449,6 +449,7 @@ class ConnectRunner:
         use_coupon=True,
         auto_apply_deals=True,  # New parameter: auto-apply deals toggle
         headless=None,  # None = default (Headless on Linux, Configurable on Windows)
+        screenshot_domain=None,  # New: Dynamic screenshot domain from UI
     ):
         self.max_parallel = max_parallel
         self.count_limit = count_limit
@@ -483,6 +484,8 @@ class ConnectRunner:
                 self.headless = headless
             else:
                 self.headless = (str(headless).lower() == "true")
+        
+        self.screenshot_domain = screenshot_domain
         
         print(f"[CONNECT] Headless mode: {self.headless}")
 
@@ -555,6 +558,7 @@ class ConnectRunner:
                 session_id=session_id,
                 headless=self.headless,
                 allow_less_qty=self.allow_less_qty,
+                screenshot_base_url_arg=self.screenshot_domain,
             )
 
             # ============================

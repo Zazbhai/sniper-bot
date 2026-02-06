@@ -4759,6 +4759,10 @@ input[type="checkbox"], input[type="radio"] {
                 <input type="text" name="deal_keyword" placeholder="Search keyword (optional)">
                 <small style="color: var(--text); opacity: 0.7; font-size: 0.85em; display: block; margin-top: 5px;">If matching product not found, you'll be prompted to select from available deals</small>
 
+                <label class="form-label" style="margin-top: 15px;">Screenshot Domain</label>
+                <input type="text" name="screenshot_domain" placeholder="e.g. husan.shop (Public IP/Domain for screenshots)">
+                <small style="color: var(--text); opacity: 0.7; font-size: 0.85em; display: block; margin-top: 5px;">Leave empty to auto-detect. Used to generate clickable screenshot links.</small>
+
                 <div style="margin-top: 20px; padding: 15px; background: var(--card); border-radius: 10px; border: 2px solid var(--border);">
                     <label class="form-label" style="margin-bottom: 10px;">Use Coupon? *</label>
                     <div style="display: flex; gap: 20px;">
@@ -8054,6 +8058,7 @@ def start_job():
         "allow_less_qty": request.form.get("allow_less_qty") == "on",
         "remove_mail_on_success": request.form.get("remove_mail_on_success") == "on",
         "deal_keyword": request.form.get("deal_keyword"),
+        "screenshot_domain": request.form.get("screenshot_domain"),
         "use_coupon": use_coupon_bool,
         "auto_apply_deals": request.form.get("auto_apply_deals") == "on",  # New: Auto apply deals toggle
         "products_dict": {

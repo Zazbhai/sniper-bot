@@ -114,14 +114,14 @@ class BotLogger:
 
 class FlipkartSniper:
     def __init__(self, phone_number, address_data, products_dict, max_price=9999,
-                 coupon="None", deal_keyword="", auto_apply_deals=True, session_id=None, headless=None, allow_less_qty=True):
+                 coupon="None", deal_keyword="", auto_apply_deals=True, session_id=None, headless=None, allow_less_qty=True, screenshot_base_url_arg=None):
         self.now = time.perf_counter()
         self.driver = None
         self.coupon = coupon
         self.fatal_error = False
         self.fatal_code = None
         self.order_id = "NOT_FOUND"
-        self.screenshot_url = "NONE"
+        self.screenshot_url = "NONE" 
         self.products = products_dict
         self.max_price = max_price
         self.deal_keyword = deal_keyword
@@ -146,11 +146,23 @@ class FlipkartSniper:
         # Absolute screenshots dir to build public/local links
         self.screenshots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "screenshots"))
         os.makedirs(self.screenshots_dir, exist_ok=True)
-        # Use local Flask server for screenshots (like imgbb but local)
-        # Supports custom domain via SCREENSHOT_DOMAIN env var (e.g., husan.shop or https://husan.shop)
-        # Supports HTTPS via SCREENSHOT_HTTPS=true or if domain starts with https://
-        # Or override completely via SCREENSHOT_BASE_URL env var
-        if os.environ.get("SCREENSHOT_BASE_URL"):
+        
+        # Determine base URL for screenshots
+        # 1. Use passed argument if valid
+        # 2. Use SCREENSHOT_BASE_URL env var
+        # 3. Use SCREENSHOT_DOMAIN env var
+        # 4. Fallback to localhost
+        
+        if screenshot_base_url_arg and screenshot_base_url_arg.strip():
+             # Ensure protocol
+             arg_url = screenshot_base_url_arg.strip()
+             if not arg_url.startswith("http"):
+                 arg_url = f"https://{arg_url}"
+             # Ensure /screenshots suffix if not present
+             if not arg_url.endswith("/screenshots"):
+                  arg_url = f"{arg_url.rstrip('/')}/screenshots"
+             self.screenshot_base_url = arg_url
+        elif os.environ.get("SCREENSHOT_BASE_URL"):
             # Full URL override
             self.screenshot_base_url = os.environ.get("SCREENSHOT_BASE_URL")
         else:
