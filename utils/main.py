@@ -229,8 +229,38 @@ class FlipkartSniper:
         self.options.add_argument("--disable-extensions")
         self.options.add_argument("--dns-prefetch-disable")
         self.options.add_argument("--disable-application-cache")
-        # Remote debugging helps prevent some render crashes
-        self.options.add_argument("--remote-debugging-port=9222")
+        # REMOVED: --remote-debugging-port can cause 'unable to connect to renderer' errors
+        
+        # Extra stability for low-resource VPS
+        if is_linux:
+            self.options.add_argument("--single-process") 
+            self.options.add_argument("--disable-zygote")
+
+        # FIX: Screenshot URL for VPS (Public IP detection)
+        if self.screenshot_base_url.startswith("http://localhost"):
+            try:
+                # If running on Linux/VPS, try to get public IP
+                if is_linux:
+                    import socket
+                    # Try to get local network IP first
+                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    s.settimeout(0)
+                    try:
+                        # doesn't even have to be reachable
+                        s.connect(('10.254.254.254', 1))
+                        local_ip = s.getsockname()[0]
+                    except Exception:
+                        local_ip = '127.0.0.1'
+                    finally:
+                        s.close()
+                    
+                    # Update base URL to use local network IP (accessible via VPN/public if forwarded)
+                    # For true public IP, user should set SCREENSHOT_DOMAIN env var
+                    port = os.environ.get("FLASK_PORT", "5000")
+                    self.screenshot_base_url = f"http://{local_ip}:{port}/screenshots"
+                    self.logger.info(f"Updated Screenshot URL to: {self.screenshot_base_url}")
+            except Exception:
+                pass
         
         # Anti-detection & Performance
         self.options.add_argument("--disable-blink-features=AutomationControlled")
