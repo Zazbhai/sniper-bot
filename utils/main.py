@@ -14,6 +14,7 @@ import requests
 from datetime import datetime
 import threading
 import platform
+from pathlib import Path
 
 class FatalBotError(Exception):
     """Raised to stop bot immediately with a short code (no long traceback spam)."""
@@ -113,7 +114,7 @@ class BotLogger:
 
 class FlipkartSniper:
     def __init__(self, phone_number, address_data, products_dict, max_price=9999,
-                 coupon="None", deal_keyword="", session_id=None, headless=None, allow_less_qty=True):
+                 coupon="None", deal_keyword="", auto_apply_deals=True, session_id=None, headless=None, allow_less_qty=True):
         self.now = time.perf_counter()
         self.driver = None
         self.coupon = coupon
@@ -124,6 +125,7 @@ class FlipkartSniper:
         self.products = products_dict
         self.max_price = max_price
         self.deal_keyword = deal_keyword
+        self.auto_apply_deals = auto_apply_deals
         self.allow_less_qty = allow_less_qty
         # Track coupon interaction state
         self.apply_button_used = False  # true if a pre-loaded Apply button was clicked
@@ -141,25 +143,94 @@ class FlipkartSniper:
         self.PHONE_NUMBER = phone_number
         self.ADDRESS_DATA = address_data
         self.ADD_ADDRESS_URL = "https://www.flipkart.com/rv/accounts/addaddress?source=entry&marketplace=FLIPKART&bsRevamped=true"
-        os.makedirs("screenshots", exist_ok=True)
+        # Absolute screenshots dir to build public/local links
+        self.screenshots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "screenshots"))
+        os.makedirs(self.screenshots_dir, exist_ok=True)
+        # Use local Flask server for screenshots (like imgbb but local)
+        # Supports custom domain via SCREENSHOT_DOMAIN env var (e.g., husan.shop or https://husan.shop)
+        # Supports HTTPS via SCREENSHOT_HTTPS=true or if domain starts with https://
+        # Or override completely via SCREENSHOT_BASE_URL env var
+        if os.environ.get("SCREENSHOT_BASE_URL"):
+            # Full URL override
+            self.screenshot_base_url = os.environ.get("SCREENSHOT_BASE_URL")
+        else:
+            # Use domain from env or default to localhost
+            custom_domain = os.environ.get("SCREENSHOT_DOMAIN", "").strip()
+            use_https = os.environ.get("SCREENSHOT_HTTPS", "false").lower() == "true"
+            
+            if custom_domain:
+                # Check if domain already includes protocol
+                if custom_domain.startswith("http://") or custom_domain.startswith("https://"):
+                    # Full URL provided, extract domain and port
+                    from urllib.parse import urlparse
+                    parsed = urlparse(custom_domain)
+                    domain = parsed.netloc or parsed.path
+                    if not domain:
+                        domain = custom_domain.replace("http://", "").replace("https://", "")
+                    protocol = "https" if custom_domain.startswith("https://") else "http"
+                    # If no port in domain, add default port (or skip for HTTPS 443)
+                    if ":" not in domain:
+                        if protocol == "https":
+                            domain_with_port = domain  # HTTPS typically uses 443 (no need to specify)
+                        else:
+                            port = os.environ.get("FLASK_PORT", "5000")
+                            domain_with_port = f"{domain}:{port}"
+                    else:
+                        domain_with_port = domain
+                    self.screenshot_base_url = f"{protocol}://{domain_with_port}/screenshots"
+                else:
+                    # Domain only, determine protocol
+                    protocol = "https" if use_https else "http"
+                    # If domain includes port, use it; otherwise default
+                    if ":" in custom_domain:
+                        domain_with_port = custom_domain
+                    else:
+                        if use_https:
+                            # HTTPS typically uses port 443 (no need to specify)
+                            domain_with_port = custom_domain
+                        else:
+                            port = os.environ.get("FLASK_PORT", "5000")
+                            domain_with_port = f"{custom_domain}:{port}"
+                    self.screenshot_base_url = f"{protocol}://{domain_with_port}/screenshots"
+            else:
+                # Default to localhost
+                port = os.environ.get("FLASK_PORT", "5000")
+                self.screenshot_base_url = f"http://localhost:{port}/screenshots"
         self.options = webdriver.ChromeOptions()
         
-        # Auto-enable headless on Windows for better performance (can be overridden)
-        if headless is None:
-            headless = platform.system() == "Windows"
+ 
         
-        # Enable headless mode with optimizations
-        if headless:
+        # Headless & VPS Optimization Logic
+        # ---------------------------------
+        is_linux = platform.system() == "Linux"
+        should_be_headless = headless
+
+        # If headless not explicitly set:
+        # - Linux: Default to TRUE (crucial for VPS)
+        # - Windows: Default to FALSE (unless user requested optimization)
+        if should_be_headless is None:
+            should_be_headless = is_linux
+
+        if should_be_headless:
+            self.logger.info("Running in HEADLESS mode (VPS optimized)")
             self.options.add_argument("--headless=new")
-            self.logger.info("Headless mode enabled")
-        else:
-            self.options.add_argument("--window-size=600,500")
+            self.options.add_argument("--window-size=1920,1080")
+            # Hide scrollbars in headless to avoid screenshot issues
+            self.options.add_argument("--hide-scrollbars")
         
-        # Critical VPS/Linux flags
+        # Critical Stability Flags (Essential for VPS)
         self.options.add_argument("--no-sandbox")
-        self.options.add_argument("--disable-dev-shm-usage")
+        self.options.add_argument("--disable-dev-shm-usage") # Fixes crash on low shm
         self.options.add_argument("--disable-gpu")
         self.options.add_argument("--disable-software-rasterizer")
+        self.options.add_argument("--disable-setuid-sandbox")
+        
+        # Network & Process Stability
+        self.options.add_argument("--disable-extensions")
+        self.options.add_argument("--dns-prefetch-disable")
+        self.options.add_argument("--disable-application-cache")
+        # Remote debugging helps prevent some render crashes
+        self.options.add_argument("--remote-debugging-port=9222")
         
         # Anti-detection & Performance
         self.options.add_argument("--disable-blink-features=AutomationControlled")
@@ -203,9 +274,8 @@ class FlipkartSniper:
         self.options.add_experimental_option("prefs", prefs)
 
         mobile_emulation = {
-            "deviceMetrics": {"width": 800, "height": 800, "pixelRatio": 2.0},
-            "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-        }
+    "deviceName": "Pixel 7"
+}
         self.options.add_experimental_option("mobileEmulation", mobile_emulation)
 
     # -----------------------
@@ -218,7 +288,9 @@ class FlipkartSniper:
         self.fatal_error = True
         self.fatal_code = code
         timestamp = int(time.time())
-        screenshot_path = f"screenshots/{code}_{timestamp}.png"
+        screenshot_filename = f"{code}_{timestamp}.png"
+        # Save all fatal screenshots into the same screenshots_dir used for orders
+        screenshot_path = os.path.join(self.screenshots_dir, screenshot_filename)
 
         self.logger.fatal(f"{code} → STOPPING BOT IMMEDIATELY")
         self.logger.log(f"{'='*60}", "FATAL")
@@ -228,6 +300,10 @@ class FlipkartSniper:
             if self.driver and self._check_driver_health():
                 self.driver.save_screenshot(screenshot_path)
                 self.logger.log(f"Screenshot saved: {screenshot_path}", "FATAL")
+                # Generate HTTP URL for local Flask server (like imgbb but local)
+                base = self.screenshot_base_url.rstrip("/")
+                self.screenshot_url = f"{base}/{screenshot_filename}"
+                self.logger.log(f"Screenshot URL: {self.screenshot_url}", "FATAL")
             else:
                 self.logger.warning("Driver not available for screenshot capture")
         except Exception as e:
@@ -429,29 +505,51 @@ class FlipkartSniper:
         self.logger.step("CLEAR_CART", "STARTED")
         self.logger.info("Navigating to cart page...")
         self.driver.get("https://www.flipkart.com/viewcart?marketplace=GROCERY")
-        time.sleep(0.5)
+        time.sleep(0.3)
         removed_count = 0
-        while True:
+        
+        max_attempts = 50  # Prevent infinite loop
+        attempt = 0
+        
+        while attempt < max_attempts:
+            attempt += 1
             removed = False
+            
+            # Try to find remove button using multiple xpaths
             for xpath in [
                 "//img[contains(@src,'d60e8bff')]/parent::div",
                 "//div[text()='Remove ' and contains(@class,'r-op4f77')]"
             ]:
                 try:
-                    el = self.q(1).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-                    self.safe_click(el)
-                    time.sleep(0.5)
-                    try:
-                        self.safe_click(self.driver.find_element(By.XPATH, "//button[text()='Remove' or text()='REMOVE']"))
-                        time.sleep(0.5)
-                    except Exception:
-                        pass
-                    removed = True
-                    removed_count += 1
-                    self.logger.info(f"Removed item #{removed_count} from cart")
-                    time.sleep(0.7)
+                    # Use find_elements (no wait) for instant check
+                    elements = self.driver.find_elements(By.XPATH, xpath)
+                    for el in elements:
+                        if el.is_displayed():
+                            self.safe_click(el)
+                            time.sleep(0.1)
+                            
+                            # Try to click confirm button
+                            try:
+                                confirm_btns = self.driver.find_elements(By.XPATH, "//button[text()='Remove' or text()='REMOVE']")
+                                for btn in confirm_btns:
+                                    if btn.is_displayed():
+                                        self.safe_click(btn)
+                                        break
+                                time.sleep(0.1)
+                            except Exception:
+                                pass
+                            
+                            removed = True
+                            removed_count += 1
+                            self.logger.info(f"Removed item #{removed_count} from cart")
+                            time.sleep(0.1)
+                            break
                 except Exception:
                     pass
+                
+                if removed:
+                    break
+            
             if not removed:
                 break
         if removed_count > 0:
@@ -508,7 +606,17 @@ class FlipkartSniper:
 
     def step_add_single_product(self, product_url, desired_qty):
         self.logger.info(f"Adding product: {product_url} | Desired Qty: {desired_qty}")
-        self.driver.get(product_url)
+        # Retry navigation to handle renderer timeouts
+        for attempt in range(3):
+            try:
+                self.driver.get(product_url)
+                break
+            except (TimeoutException, WebDriverException) as e:
+                self.logger.warning(f"Navigation failed (attempt {attempt+1}/3): {e}")
+                if attempt == 2:
+                    self.logger.error("Failed to load product page after 3 attempts")
+                    self._fatal("PAGE_LOAD_FAILED")
+                time.sleep(3)
         
         # Give page time to load and React components to settle (Grocery is slow)
         time.sleep(3)
@@ -755,175 +863,390 @@ class FlipkartSniper:
     # ------------------------------------------------------------------
     # Apply cart deals
     # ------------------------------------------------------------------
-    def step_apply_cart_deals(self, target_first_word):
+    def step_apply_cart_deals(self, target_first_word=None):
+        """
+        Apply cart deals by clicking Add/Apply buttons.
+        Handles both 'Add' and 'Apply deal' button text (case-insensitive).
+        Extracts and logs product names and prices.
+        
+        Args:
+            target_first_word: Optional keyword to filter specific deals
+        """
         target_first_word = (target_first_word or "").upper().strip()
         
         self.logger.step("APPLY_DEALS", "STARTED")
-        deal_buttons = self.driver.find_elements(
-            By.XPATH,
-            "//div[contains(@class,'css-1rynq56') and (normalize-space(text())='Add' or normalize-space(text())='Apply deal' or normalize-space(text())='Apply Deal')]"
-        )
-        self.logger.info(f"Found {len(deal_buttons)} deal button(s)")
         
-        if not deal_buttons:
-            self.logger.info("No deal buttons found, skipping deal application")
+        # Check auto_apply_deals toggle
+        if not self.auto_apply_deals:
+            self.logger.info("Auto-apply deals is DISABLED - skipping deal application")
             self.logger.step("APPLY_DEALS", "SKIPPED")
             return
         
-        # Collect all products with their buttons
-        products_with_buttons = []
-        for idx, btn in enumerate(deal_buttons, start=1):
-            try:
-                parent = btn
-                product_name = None
-                for _ in range(10):
-                    parent = parent.find_element(By.XPATH, "./parent::*")
-                    try:
-                        name_el = parent.find_element(
-                            By.XPATH,
-                            ".//div[contains(@class,'css-1rynq56') and contains(@style,'font-size: 12px')]"
-                        )
-                        product_name = name_el.text.strip()
-                        break
-                    except Exception:
-                        continue
-                if product_name:
-                    first_word = product_name.split()[0].upper()
-                    products_with_buttons.append({
-                        "index": idx - 1,  # 0-based index
-                        "name": product_name,
-                        "first_word": first_word,
-                        "button": btn
-                    })
-                    self.logger.info(f"Product #{idx}: '{product_name}' → First word: {first_word}")
-            except Exception as e:
-                self.logger.warning(f"Error extracting product name for button #{idx}: {e}")
-                continue
-        
-        if not products_with_buttons:
-            self.logger.warning("Could not extract any product names, skipping deal application")
-            self.logger.step("APPLY_DEALS", "SKIPPED")
-            return
-        
-        # Case 1: If deal_keyword is NOT provided, automatically click first deal
-        if not target_first_word:
-            self.logger.info("No deal keyword provided → automatically clicking first deal")
-            try:
-                first_product = products_with_buttons[0]
-                self.logger.info(f"Auto-selecting: '{first_product['name']}'")
-                self.safe_click(first_product["button"])
-                time.sleep(1.2)
-                self.logger.success(f"Deal applied: '{first_product['name']}'")
-                self.logger.step("APPLY_DEALS", "SUCCESS")
-                return
-            except Exception as e:
-                self.logger.error(f"Error clicking first deal: {e}")
-                self.logger.step("APPLY_DEALS", "FAILED")
-                return
-        
-        # Case 2: If deal_keyword IS provided, try to find match
-        self.logger.info(f"Searching for deal matching keyword: '{target_first_word}'")
-        matched_index = None
-        for idx, product in enumerate(products_with_buttons):
-            if product["first_word"] == target_first_word:
-                matched_index = idx
-                self.logger.success(f"MATCH! Found '{product['name']}' → Clicking")
-                self.safe_click(product["button"])
-                time.sleep(1.2)
-                self.logger.success(f"Deal applied: '{product['name']}'")
-                self.logger.step("APPLY_DEALS", "SUCCESS")
-                return
-        
-        # Case 3: deal_keyword provided but NOT found → show selection modal
-        self.logger.warning(f"No match found for '{target_first_word}' → showing selection modal")
         try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            files_dir = os.path.join(base_dir, "..", "files")
-            os.makedirs(files_dir, exist_ok=True)
-            deal_selection_file = os.path.join(files_dir, "deal_selection.json")
-            deal_response_file = os.path.join(files_dir, "deal_response.json")
+            # Wait for page to stabilize
+            time.sleep(1.5)
             
-            # Write deal selection request
-            selection_data = {
-                "status": "pending",
-                "session_id": self.session_id or f"session_{int(time.time())}",
-                "products": [{"index": p["index"], "name": p["name"]} for p in products_with_buttons],
-                "matched_index": None,  # No match found
-                "timestamp": time.time()
-            }
-            with open(deal_selection_file, "w", encoding="utf-8") as f:
-                json.dump(selection_data, f, indent=2)
+            # Strategy: Find clickable button divs with orange border
+            button_containers = self.driver.find_elements(
+                By.XPATH,
+                "//div[contains(@style, 'border-color: rgb(133, 60, 14)')]"
+            )
             
-            self.logger.info(f"Waiting for user selection (session: {selection_data['session_id']})...")
-            self.logger.info("Available products:")
-            for p in products_with_buttons:
-                self.logger.info(f"  {p['index'] + 1}) {p['name']}")
+            self.logger.info(f"Found {len(button_containers)} potential deal button containers")
             
-            # Poll for user selection (wait up to 5 minutes)
-            max_wait_time = 300  # 5 minutes
-            poll_interval = 2  # Check every 2 seconds
-            start_time = time.time()
+            deals_found = []
             
-            while (time.time() - start_time) < max_wait_time:
-                if os.path.exists(deal_response_file):
+            for idx, container in enumerate(button_containers):
+                try:
+                    if not container.is_displayed():
+                        self.logger.info(f"[DEBUG] Container #{idx+1}: Not displayed - skipping")
+                        continue
+                    
+                    # Log all text in this container for debugging
                     try:
-                        with open(deal_response_file, "r", encoding="utf-8") as f:
-                            response_data = json.load(f)
+                        all_container_text = container.text.strip()
+                        self.logger.info(f"[DEBUG] Container #{idx+1}: Full text = '{all_container_text[:100]}...'")
+                    except:
+                        pass
+                    
+                    # Get the button text
+                    text_elements = container.find_elements(
+                        By.XPATH,
+                        ".//div[@class='css-1rynq56']"
+                    )
+                    
+                    self.logger.info(f"[DEBUG] Container #{idx+1}: Found {len(text_elements)} text elements with class 'css-1rynq56'")
+                    
+                    button_text = ""
+                    for elem in text_elements:
+                        text = elem.text.strip()
+                        text_lower = text.lower()
+                        self.logger.info(f"[DEBUG] Container #{idx+1}: Text element = '{text}'")
+                        if text_lower in ['add', 'apply deal', 'apply']:
+                            button_text = text
+                            break
+                    
+                    if not button_text:
+                        # Fallback: check all text in container
+                        container_text = container.text.strip().lower()
+                        self.logger.info(f"[DEBUG] Container #{idx+1}: No button text in elements, checking full container text")
+                        if 'add' in container_text or 'apply' in container_text:
+                            button_text = container.text.strip().split('\n')[0]
+                            self.logger.info(f"[DEBUG] Container #{idx+1}: Found button text in full text: '{button_text}'")
+                        else:
+                            self.logger.info(f"[DEBUG] Container #{idx+1}: No Add/Apply button text found anywhere - skipping")
+                            continue
+                    
+                    self.logger.info(f"[DEBUG] Container #{idx+1}: Found button text '{button_text}' - extracting product info...")
+                    
+                    # Extract product name and price by traversing up
+                    product_name = ""
+                    product_price = ""
+                    original_price = ""
+                    is_unlocked = False
+                    
+                    try:
+                        # Go up to find the parent deal container
+                        current = container
+                        deal_container = None
                         
-                        # Check if response is for this session
-                        if response_data.get("session_id") == selection_data["session_id"]:
-                            selected_index = response_data.get("selected_index")
+                        for _ in range(10):  # Increased range to find container
+                            current = current.find_element(By.XPATH, "./parent::div")
+                            style = current.get_attribute("style") or ""
                             
-                            # Clean up response file
+                            # The deal container has: border-radius: 4px; margin-bottom: 8px
+                            if "border-radius: 4px" in style and "margin-bottom: 8px" in style:
+                                deal_container = current
+                                break
+                        
+                        if not deal_container:
+                            # Try alternate approach - get the outermost parent
+                            current = container
+                            for _ in range(10):
+                                parent = current.find_element(By.XPATH, "./parent::div")
+                                class_attr = parent.get_attribute("class") or ""
+                                if "css-175oi2r" in class_attr:
+                                    current = parent
+                                    deal_container = current
+                                else:
+                                    break
+                        
+                        if deal_container:
+                            # Check for "Deal unlocked" status
                             try:
-                                os.remove(deal_response_file)
+                                unlocked_elements = deal_container.find_elements(
+                                    By.XPATH,
+                                    ".//*[contains(text(), 'Deal unlocked') or contains(text(), 'deal unlocked')]"
+                                )
+                                if unlocked_elements:
+                                    for elem in unlocked_elements:
+                                        if elem.is_displayed() and elem.text.strip():
+                                            is_unlocked = True
+                                            break
                             except:
                                 pass
                             
-                            # Clean up selection file
+                            # Also check for green background (unlocked indicator)
                             try:
-                                os.remove(deal_selection_file)
+                                green_divs = deal_container.find_elements(
+                                    By.XPATH,
+                                    ".//div[contains(@style, 'background-color: rgb(231, 248, 236)')]"
+                                )
+                                if green_divs and any(d.is_displayed() for d in green_divs):
+                                    is_unlocked = True
                             except:
                                 pass
                             
-                            if selected_index is None:
-                                self.logger.warning("User cancelled deal selection")
-                                self.logger.step("APPLY_DEALS", "CANCELLED")
-                                return
+                            # Extract product name - Multiple strategies
+                            # Strategy 1: Look for specific color and font-size
+                            if not product_name:
+                                try:
+                                    name_candidates = deal_container.find_elements(
+                                        By.XPATH,
+                                        ".//div[contains(@style, 'color: rgb(33, 33, 33)') and contains(@style, 'font-size: 12px')]"
+                                    )
+                                    for candidate in name_candidates:
+                                        text = candidate.text.strip()
+                                        if self._is_valid_product_name(text):
+                                            product_name = text
+                                            break
+                                except:
+                                    pass
                             
-                            if 0 <= selected_index < len(products_with_buttons):
-                                selected_product = products_with_buttons[selected_index]
-                                self.logger.info(f"User selected: '{selected_product['name']}' → Clicking")
-                                self.safe_click(selected_product["button"])
-                                time.sleep(1.2)
-                                self.logger.success(f"Deal applied: '{selected_product['name']}'")
-                                self.logger.step("APPLY_DEALS", "SUCCESS")
-                                return
-                            else:
-                                self.logger.error(f"Invalid selection index: {selected_index}")
-                                self.logger.step("APPLY_DEALS", "FAILED")
-                                return
+                            # Strategy 2: Look for any dark text that's not a price
+                            if not product_name:
+                                try:
+                                    all_divs = deal_container.find_elements(By.TAG_NAME, "div")
+                                    for div in all_divs:
+                                        text = div.text.strip()
+                                        if self._is_valid_product_name(text):
+                                            product_name = text
+                                            break
+                                except:
+                                    pass
+                            
+                            # Strategy 3: Get all text and parse
+                            if not product_name:
+                                try:
+                                    full_text = deal_container.text
+                                    lines = [line.strip() for line in full_text.split('\n') if line.strip()]
+                                    for line in lines:
+                                        if self._is_valid_product_name(line):
+                                            product_name = line
+                                            break
+                                except:
+                                    pass
+                            
+                            # Extract price - Look for ₹ symbol with font-size: 17px
+                            try:
+                                price_elements = deal_container.find_elements(
+                                    By.XPATH,
+                                    ".//div[contains(@style, 'font-size: 17px') and contains(text(), '₹')]"
+                                )
+                                if price_elements:
+                                    for elem in price_elements:
+                                        text = elem.text.strip()
+                                        if text.startswith('₹'):
+                                            product_price = text
+                                            break
+                            except:
+                                pass
+                            
+                            # Extract original price (strikethrough)
+                            try:
+                                original_price_elements = deal_container.find_elements(
+                                    By.XPATH,
+                                    ".//div[contains(@style, 'text-decoration-line: line-through') and contains(text(), '₹')]"
+                                )
+                                if original_price_elements:
+                                    for elem in original_price_elements:
+                                        text = elem.text.strip()
+                                        if text.startswith('₹'):
+                                            original_price = text
+                                            break
+                            except:
+                                pass
+                        else:
+                            self.logger.info(f"[DEBUG] Container #{idx+1}: Could not find deal container parent")
+                    
                     except Exception as e:
-                        self.logger.error(f"Error reading response: {e}")
+                        self.logger.info(f"[DEBUG] Container #{idx+1}: Error traversing to parent container: {e}")
+                    
+                    # Extract first word for filtering
+                    first_word = product_name.split()[0].upper() if product_name else ""
+                    
+                    # Format price display
+                    price_display = product_price
+                    if product_price and original_price:
+                        price_display = f"{product_price} (was {original_price})"
+                    elif not product_price:
+                        price_display = "Price not found"
+                    
+                    # Log what we extracted
+                    self.logger.info(f"[DEBUG] Container #{idx+1}: Extracted - Name: '{product_name or 'Unknown'}', Price: '{product_price or 'N/A'}', Unlocked: {is_unlocked}")
+                    
+                    # Add to deals_found even if some data is missing
+                    deals_found.append({
+                        "element": container,
+                        "button_text": button_text,
+                        "product_name": product_name or "Unknown Product",
+                        "product_price": product_price,
+                        "original_price": original_price,
+                        "price_display": price_display,
+                        "first_word": first_word,
+                        "is_unlocked": is_unlocked
+                    })
+                    
+                except Exception as e:
+                    self.logger.info(f"[DEBUG] Container #{idx+1}: Error processing container: {e}")
+                    continue
+            
+            # Log all found deals
+            self.logger.info(f"Found {len(deals_found)} clickable deal button(s)")
+            for idx, deal in enumerate(deals_found):
+                status = "UNLOCKED" if deal["is_unlocked"] else "AVAILABLE"
+                self.logger.info(f"  Deal #{idx+1}: '{deal['product_name']}' - {deal['price_display']} - Button: '{deal['button_text']}' [{status}]")
+            
+            if not deals_found:
+                self.logger.warning("No Add/Apply buttons found")
+                self.logger.step("APPLY_DEALS", "SKIPPED")
+                return
+            
+            # Determine which deals to click based on new logic
+            deals_to_click = []
+            
+            # Find all ₹1 products
+            one_rupee_deals = [d for d in deals_found if d['product_price'] == '₹1']
+            
+            if target_first_word:
+                # User specified a keyword - search for it first
+                self.logger.info(f"Searching for keyword: '{target_first_word}'")
+                matching_deals = [d for d in deals_found if d["first_word"] == target_first_word]
                 
-                time.sleep(poll_interval)
+                if matching_deals:
+                    # Check if keyword match is unlocked
+                    unlocked_matches = [d for d in matching_deals if d['is_unlocked']]
+                    
+                    if unlocked_matches:
+                        self.logger.success(f"Found UNLOCKED deal matching '{target_first_word}' - clicking it")
+                        deals_to_click = unlocked_matches[:1]  # Click only the first unlocked match
+                    else:
+                        # Keyword found but not unlocked - fallback to ₹1 product
+                        self.logger.warning(f"Found '{target_first_word}' but it's NOT UNLOCKED")
+                        if one_rupee_deals:
+                            self.logger.info(f"Falling back to ₹1 product instead")
+                            deals_to_click = one_rupee_deals[:1]  # Click only first ₹1 product
+                        else:
+                            self.logger.warning("No ₹1 product available - skipping deals")
+                            deals_to_click = []
+                else:
+                    # Keyword not found - fallback to ₹1 product
+                    self.logger.warning(f"Keyword '{target_first_word}' NOT FOUND in available deals")
+                    if one_rupee_deals:
+                        self.logger.info(f"Falling back to ₹1 product instead")
+                        deals_to_click = one_rupee_deals[:1]  # Click only first ₹1 product
+                    else:
+                        self.logger.warning("No ₹1 product available - skipping deals")
+                        deals_to_click = []
+            else:
+                # No keyword specified - only click if ₹1 product exists
+                if one_rupee_deals:
+                    self.logger.info(f"Found {len(one_rupee_deals)} ₹1 product(s) - clicking first one")
+                    deals_to_click = one_rupee_deals[:1]  # Click only first ₹1 product
+                else:
+                    self.logger.warning("No ₹1 product found - skipping all deals")
+                    deals_to_click = []
             
-            # Timeout - clean up and continue
-            self.logger.warning("Selection timeout - no deal will be applied")
-            try:
-                if os.path.exists(deal_selection_file):
-                    os.remove(deal_selection_file)
-                if os.path.exists(deal_response_file):
-                    os.remove(deal_response_file)
-            except:
-                pass
-            self.logger.step("APPLY_DEALS", "TIMEOUT")
+            # Click selected deals
+            clicked_count = 0
+            clicked_products = []
             
+            if not deals_to_click:
+                self.logger.info("No deals selected to click - moving forward")
+                self.logger.step("APPLY_DEALS", "SKIPPED")
+                return
+            
+            for deal in deals_to_click:
+                try:
+                    product = deal['product_name']
+                    price = deal['price_display']
+                    button_text = deal['button_text']
+                    
+                    self.logger.info(f"Clicking '{button_text}' for: {product} - {price}")
+                    
+                    # Scroll into view
+                    self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", deal['element'])
+                    time.sleep(0.3)
+                    
+                    # Click using JavaScript for reliability
+                    self.driver.execute_script("arguments[0].click();", deal['element'])
+                    
+                    clicked_count += 1
+                    clicked_products.append(f"{product} - {price}")
+                    self.logger.success(f"✓ Deal added: {product} - {price}")
+                    
+                    # Short delay between clicks
+                    time.sleep(0.8)
+                    
+                except Exception as e:
+                    self.logger.warning(f"Failed to click deal for '{deal['product_name']}': {e}")
+                    continue
+            
+            # Final summary
+            if clicked_count > 0:
+                self.logger.success(f"Successfully applied {clicked_count} deal(s):")
+                for product in clicked_products:
+                    self.logger.success(f"  • {product}")
+                self.logger.step("APPLY_DEALS", "SUCCESS")
+            else:
+                self.logger.error("Failed to apply any deals")
+                self.logger.step("APPLY_DEALS", "FAILED")
+        
         except Exception as e:
-            self.logger.error(f"Error in deal selection modal: {e}")
-            import traceback
-            traceback.print_exc()
-            self.logger.step("APPLY_DEALS", "FAILED")
+            self.logger.error(f"Error in step_apply_cart_deals: {e}")
+            self.logger.step("APPLY_DEALS", "ERROR")
+            raise
+
+
+    def _is_valid_product_name(self, text):
+        """
+        Helper function to validate if text is a valid product name.
+        
+        Args:
+            text: Text to validate
+            
+        Returns:
+            bool: True if text appears to be a valid product name
+        """
+        if not text or len(text) < 4:
+            return False
+        
+        # Exclude common non-product text
+        text_lower = text.lower()
+        excluded_phrases = [
+            'deal unlocked', 'unlocked', 'add', 'apply', 'apply deal',
+            'save', 'off', 'discount', 'free delivery', 'delivery',
+            'kg', 'g', 'ml', 'l', 'litre', 'liter', 'gram', 'pack'
+        ]
+        
+        # Check if text is just a measurement or excluded phrase
+        if text_lower in excluded_phrases:
+            return False
+        
+        # Check if text starts with ₹ (price)
+        if text.startswith('₹'):
+            return False
+        
+        # Check if text is mostly numbers
+        digits = sum(c.isdigit() for c in text)
+        if digits > len(text) / 2:
+            return False
+        
+        # Must have at least some alphabetic characters
+        if not any(c.isalpha() for c in text):
+            return False
+        
+        return True
 
     # ------------------------------------------------------------------
     # Apply coupon
@@ -1043,7 +1366,7 @@ class FlipkartSniper:
 
         # -------------------------------------------------------------
         # CHECK FOR APPLY BUTTON AFTER OPENING COUPON SECTION
-        # (Note: Even if Apply button is found, we'll still enter coupon first)
+        # If Apply button exists, it means a coupon is pre-selected - just click it!
         # -------------------------------------------------------------
         apply_button_found_after_open = False
         apply_button_element = None
@@ -1061,7 +1384,7 @@ class FlipkartSniper:
                             style = apply_btn.get_attribute("style") or ""
                             # Check for orange/brown color
                             if "rgb(157, 73, 0)" in style or "rgb(133, 60, 14)" in style or "157, 73, 0" in style:
-                                self.logger.info("Found Apply button after opening section → will enter coupon first, then click it")
+                                self.logger.success("Found Apply button after opening section → clicking it directly (coupon pre-selected)")
                                 apply_button_found_after_open = True
                                 apply_button_element = apply_btn
                                 break
@@ -1093,7 +1416,75 @@ class FlipkartSniper:
                 pass
 
         # -------------------------------------------------------------
-        # ENTER COUPON MANUALLY (always enter coupon if section is open)
+        # IF APPLY BUTTON FOUND: Click it immediately and exit
+        # Otherwise: Enter coupon manually
+        # -------------------------------------------------------------
+        if apply_button_found_after_open and apply_button_element:
+            # Apply button exists - coupon is pre-selected, just click it!
+            try:
+                self.logger.info("Clicking pre-selected coupon Apply button...")
+                self.safe_click(apply_button_element)
+                self.apply_button_used = True
+                self.logger.success("APPLY BUTTON CLICKED — COUPON APPLIED!")
+                time.sleep(2)
+
+                # Check for errors after clicking - look for RED error text, not just any text
+                try:
+                    # Find all divs with the common class that might contain errors or buttons
+                    potential_errors = self.driver.find_elements(
+                        By.XPATH,
+                        "//div[contains(@class,'css-1rynq56')]"
+                    )
+                    
+                    actual_error = None
+                    for elem in potential_errors:
+                        try:
+                            if elem.is_displayed():
+                                text = elem.text.strip().lower()
+                                style = elem.get_attribute("style") or ""
+                                
+                                # Check if this is an ERROR by checking for:
+                                # 1. Red color (rgb(198, 4, 36) or similar red colors)
+                                # 2. Error-related text
+                                is_red = "rgb(198, 4, 36)" in style or "rgb(248, 81, 73)" in style or "rgb(255, 0, 0)" in style
+                                has_error_text = any(keyword in text for keyword in ['invalid', 'expired', 'max usage', 'maximum usage', 'not applicable', 'not valid', 'error'])
+                                
+                                # Only treat as error if BOTH red color AND error text are present
+                                if is_red and has_error_text:
+                                    actual_error = elem
+                                    break
+                        except:
+                            continue
+                    
+                    if actual_error:
+                        msg = actual_error.text.strip()
+                        self.logger.error(f"COUPON ERROR: {msg}")
+                        if "max usage" in msg.lower() or "maximum usage" in msg.lower():
+                            self._fatal("COUPON_MAX_USAGE_LIMIT")
+                        else:
+                            self._fatal("INVALID_COUPON")
+                    else:
+                        self.logger.success("Apply button clicked successfully - no errors detected")
+                        
+                except NoSuchElementException:
+                    self.logger.success("Apply button clicked successfully - no errors detected")
+                
+                self.logger.step("APPLY_COUPON", "SUCCESS")
+                try:
+                    btn = self.driver.find_element(By.XPATH, "//a[contains(@class,'jlLn4z')]")
+                    self.driver.execute_script("arguments[0].click();", btn)
+                except Exception as e:
+                    self._fatal("BACK_ICON_NOT_FOUND")
+                        
+                return  # Exit early - coupon applied successfully
+            except FatalBotError:
+                raise
+            except Exception as e:
+                self.logger.warning(f"Failed to click pre-selected Apply button: {e}, will try manual entry...")
+                # Fall through to manual entry
+        
+        # -------------------------------------------------------------
+        # ENTER COUPON MANUALLY (only if no Apply button was found/clicked)
         # -------------------------------------------------------------
         if opener:
             try:
@@ -1105,39 +1496,63 @@ class FlipkartSniper:
                 self.logger.info("Coupon code entered")
                 self.coupon_filled = True
 
-                # If we found an Apply button earlier, use that one; otherwise find a new one
-                if apply_button_found_after_open and apply_button_element:
-                    self.logger.info("Clicking the Apply button found earlier (after entering coupon)")
-                    self.safe_click(apply_button_element)
-                    self.apply_button_used = True
-                else:
-                    # Find Apply button normally
-                    self.logger.info("Finding and clicking Apply button...")
-                    apply_btn = self.q(5).until(EC.any_of(
-                        EC.element_to_be_clickable((By.XPATH, "//div[contains(@class,'css-1rynq56') and normalize-space(text())='Add Coupon']")),
-                        EC.element_to_be_clickable((By.XPATH, "//div[text()='Apply']")),
-                    ))
-                    self.safe_click(apply_btn)
+                # Find Apply button
+                self.logger.info("Finding and clicking Apply button...")
+                apply_btn = self.q(5).until(EC.any_of(
+                    EC.element_to_be_clickable((By.XPATH, "//div[contains(@class,'css-1rynq56') and normalize-space(text())='Add Coupon']")),
+                    EC.element_to_be_clickable((By.XPATH, "//div[text()='Apply']")),
+                ))
+                self.safe_click(apply_btn)
                 
                 self.logger.success("APPLY BUTTON CLICKED — COUPON APPLIED!")
                 time.sleep(2)
 
-                # Detect ANY coupon error
+                # Detect coupon errors - look for RED error text, not just any text
                 try:
-                    coupon_error = self.driver.find_element(
+                    # Find all divs with the common class
+                    potential_errors = self.driver.find_elements(
                         By.XPATH,
-                        "//div[contains(@class,'css-1rynq56') and (contains(text(),'Invalid coupon') or contains(text(),'max usage'))]"
+                        "//div[contains(@class,'css-1rynq56')]"
                     )
-                    if coupon_error.is_displayed():
-                        msg = coupon_error.text.strip()
+                    
+                    actual_error = None
+                    for elem in potential_errors:
+                        try:
+                            if elem.is_displayed():
+                                text = elem.text.strip().lower()
+                                style = elem.get_attribute("style") or ""
+                                
+                                # Check if this is an ERROR by checking for:
+                                # 1. Red color (rgb(198, 4, 36) or similar red colors)
+                                # 2. Error-related text
+                                is_red = "rgb(198, 4, 36)" in style or "rgb(248, 81, 73)" in style or "rgb(255, 0, 0)" in style
+                                has_error_text = any(keyword in text for keyword in ['invalid', 'expired', 'max usage', 'maximum usage', 'not applicable', 'not valid', 'error'])
+                                
+                                # Only treat as error if BOTH red color AND error text are present
+                                if is_red and has_error_text:
+                                    actual_error = elem
+                                    break
+                        except:
+                            continue
+                    
+                    if actual_error:
+                        msg = actual_error.text.strip()
+                        msg_l = msg.lower()
                         self.logger.error(f"COUPON ERROR DETECTED → {msg}")
-                        if "max usage" in msg.lower():
+                        if "max usage" in msg_l or "usage limit" in msg_l:
                             self._fatal("COUPON_MAX_USAGE_LIMIT")
+                        elif "expired" in msg_l:
+                            self._fatal("COUPON_EXPIRED")
                         else:
                             self._fatal("INVALID_COUPON")
-                except NoSuchElementException:
+                except Exception:
+                    # No coupon error found (or couldn't read it) -> continue
                     pass
                 
+                # If a fatal coupon error happened above, don't mark success or continue
+                if self.fatal_error:
+                    return
+
                 self.logger.step("APPLY_COUPON", "SUCCESS")
 
             except FatalBotError:
@@ -1146,9 +1561,14 @@ class FlipkartSniper:
             except Exception as e:
                 self.logger.error(f"Coupon apply failed: {e}")
                 self._fatal("COUPON_APPLY_ERROR")
+
+            # If coupon step is already fatal, don't try to click back icon
+            if self.fatal_error:
+                return
+
             try:
                 btn = self.driver.find_element(By.XPATH, "//a[contains(@class,'jlLn4z')]")
-                self.driver.execute_script("arguments[0].click();", btn)   
+                self.driver.execute_script("arguments[0].click();", btn)
             except Exception as e:
                 self._fatal("BACK_ICON_NOT_FOUND")
                                             
@@ -1157,11 +1577,16 @@ class FlipkartSniper:
     # Checkout & order
     # ------------------------------------------------------------------
     def step_checkout(self):
-        self.logger.step("CHECKOUT", "STARTED")
-        
-        # Check driver health before critical checkout operations
+        # If a fatal error already occurred, don't start checkout
+        if self.fatal_error:
+            return
+
+        # Check driver health BEFORE logging step start, so we don't show CHECKOUT if driver is dead
         if not self._check_driver_health():
             self._fatal("DRIVER_UNRESPONSIVE")
+            return
+
+        self.logger.step("CHECKOUT", "STARTED")
 
         # BACK TO CART (conditional)
         if self.apply_button_used:
@@ -1205,35 +1630,131 @@ class FlipkartSniper:
             self.logger.error(f"Continue error: {e}")
             self._fatal("CHECKOUT_CONTINUE_FAILED")
 
-        # SECOND CONTINUE
-        try:
-            second_continue = self.q(5).until(EC.presence_of_element_located((
-                By.XPATH, "//div[contains(@style,'rgb(255, 194, 0)') and .//div[normalize-space(.)='Continue']]"
-            )))
-            self.safe_click(second_continue)
-            self.logger.info("Second Continue clicked")
-        except FatalBotError:
-            raise  # Re-raise fatal errors immediately
-        except Exception:
-            self.logger.info("No second continue (might not be needed)")
-
+        #PRICE VALIDATION CHECK
         # PRICE VALIDATION
         try:
-            price_xpath = "//span[@data-testid='price' and contains(@class,'font-l-semibold')]"
-            self.q(10).until(EC.presence_of_element_located((By.XPATH, price_xpath)))
+            price_xpath = (
+                "//div[normalize-space(text())='Total Amount']"
+                "/following::div[contains(normalize-space(text()), '₹')][1]"
+            )
+
+            self.q(12).until(
+                EC.visibility_of_element_located((By.XPATH, price_xpath))
+            )
+
             price_text = self.driver.find_element(By.XPATH, price_xpath).text.strip()
 
             digits = "".join(filter(str.isdigit, price_text))
-            if digits:
-                numeric_price = int(digits)
-                self.logger.info(f"Price validation: {numeric_price} (max: {self.max_price})")
-                if numeric_price > self.max_price:
-                    self._fatal("PRICE_TOO_HIGH")
+            if not digits:
+                self._fatal("PRICE_NOT_FOUND")
+
+            numeric_price = int(digits)
+
+            self.logger.info(
+                f"Price validation: {numeric_price} (max: {self.max_price})"
+            )
+
+            if numeric_price > self.max_price:
+                self._fatal("PRICE_TOO_HIGH")
+
         except FatalBotError:
             raise  # Re-raise fatal errors immediately
         except Exception as e:
             self.logger.error(f"Price validation error: {e}")
             self._fatal("PRICE_VALIDATION_ERROR")
+
+
+        # SECOND CONTINUE BUTTON
+        try:
+            # Scroll to ensure button is visible
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(0.5)
+            
+            # Target the outer clickable div with r-eu3ka class that contains Continue text
+            second_continue_xpaths = [
+                "(//div[contains(@class,'r-eu3ka') and .//div[normalize-space(.)='Continue']])[last()]",
+                "//div[contains(@class,'r-eu3ka')][.//div[normalize-space(text())='Continue']]",
+                "//div[contains(@class,'r-eu3ka') and contains(@class,'r-1awozwy')][.//div[contains(text(),'Continue')]]",
+                "//div[.//div[normalize-space(text())='Continue']][contains(@class,'r-eu3ka')]",
+                "//button[normalize-space(.)='Continue']",
+                "//div[normalize-space(.)='Continue' and contains(@class,'r-eu3ka')]"
+            ]
+            
+            # Find the element
+            second_continue_btn = self.find_clickable_with_retry(second_continue_xpaths, timeout=5, retries=1, error_code="SECOND_CONTINUE_FAILED")
+            
+            # Ensure we have the outer clickable div, not the inner text div
+            element_class = second_continue_btn.get_attribute('class') or ''
+            if 'r-eu3ka' not in element_class:
+                # We might have found the inner div, try to get the parent
+                try:
+                    parent = second_continue_btn.find_element(By.XPATH, "./..")
+                    parent_class = parent.get_attribute('class') or ''
+                    if 'r-eu3ka' in parent_class:
+                        second_continue_btn = parent
+                        self.logger.info("Using parent element with r-eu3ka class")
+                except Exception:
+                    pass
+            
+            # Wait a bit and verify element is still clickable
+            time.sleep(0.3)
+            if not (second_continue_btn.is_displayed() and second_continue_btn.is_enabled()):
+                # Re-find if stale
+                second_continue_btn = self.find_clickable_with_retry(second_continue_xpaths, timeout=3, retries=1, error_code="SECOND_CONTINUE_FAILED")
+                # Check parent again
+                element_class = second_continue_btn.get_attribute('class') or ''
+                if 'r-eu3ka' not in element_class:
+                    try:
+                        parent = second_continue_btn.find_element(By.XPATH, "./..")
+                        parent_class = parent.get_attribute('class') or ''
+                        if 'r-eu3ka' in parent_class:
+                            second_continue_btn = parent
+                    except Exception:
+                        pass
+            
+            # Scroll into view
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'center', behavior:'smooth'});", second_continue_btn)
+            time.sleep(0.5)
+            
+            # Log the element we're about to click
+            final_class = second_continue_btn.get_attribute('class') or ''
+            self.logger.info(f"Clicking element with classes: {final_class[:100]}")
+            
+            # Try multiple click strategies
+            clicked = False
+            try:
+                # Strategy 1: JavaScript click on the element
+                self.driver.execute_script("arguments[0].click();", second_continue_btn)
+                clicked = True
+                self.logger.info("Second Continue clicked (JS click)")
+            except Exception as e1:
+                try:
+                    # Strategy 2: Regular click
+                    second_continue_btn.click()
+                    clicked = True
+                    self.logger.info("Second Continue clicked (regular click)")
+                except Exception as e2:
+                    try:
+                        # Strategy 3: Click via parent if needed
+                        parent = second_continue_btn.find_element(By.XPATH, "./..")
+                        if 'r-eu3ka' in parent.get_attribute('class'):
+                            self.driver.execute_script("arguments[0].click();", parent)
+                            clicked = True
+                            self.logger.info("Second Continue clicked (via parent)")
+                    except Exception as e3:
+                        self.logger.warning(f"All click strategies failed: JS={e1}, Regular={e2}, Parent={e3}")
+            
+            if not clicked:
+                self.logger.error("Failed to click second continue button")
+                self._fatal("SECOND_CONTINUE_CLICK_FAILED")
+            
+            time.sleep(2)
+
+        except FatalBotError:
+            raise
+        except Exception as e:
+            self.logger.info(f"No second continue (might not be needed): {e}")
+
 
         # COD - Multiple fallback XPaths
         try:
@@ -1317,12 +1838,128 @@ class FlipkartSniper:
             current_url = self.driver.current_url
             orders_page_open = "flipkart.com/rv/orders" in current_url or "flipkart.com/rv/orders?isSkipOc=true" in current_url
             
-            # Click delivery date using class selector
+            # Click delivery date - Multiple robust strategies
             try:
-                delivery = self.driver.find_elements(By.CSS_SELECTOR, "span.yxF9fy")
-                if delivery:
-                    self.safe_click(delivery[0])
-                    time.sleep(2)
+                # Wait for orders page to load
+                time.sleep(1)
+                
+                # Multiple XPath and CSS selector fallbacks
+                delivery_xpaths = [
+                    # Target the outer clickable div with class U6seEY
+                    "//div[contains(@class,'U6seEY')]",
+                    # Target div containing delivery text span
+                    "//div[contains(@class,'Ck4P40')]/ancestor::div[contains(@class,'U6seEY')]",
+                    # Find by delivery text span and get parent clickable div
+                    "//span[contains(@class,'_osffw')]/ancestor::div[contains(@class,'U6seEY')]",
+                    # Alternative: find by the right chevron image and get parent
+                    "//img[contains(@class,'lQTgKD')]/ancestor::div[contains(@class,'U6seEY')]",
+                    # Find by structure: div with U6seEY that contains Ck4P40
+                    "//div[contains(@class,'U6seEY')][.//div[contains(@class,'Ck4P40')]]",
+                    # Fallback: any div with U6seEY class
+                    "(//div[contains(@class,'U6seEY')])[1]"
+                ]
+                
+                delivery_css_selectors = [
+                    "div.U6seEY",
+                    "div[class*='U6seEY']",
+                    "div.Ck4P40",
+                    "span._osffw"
+                ]
+                
+                delivery_element = None
+                
+                # Try XPath selectors first
+                for xpath in delivery_xpaths:
+                    try:
+                        elements = self.driver.find_elements(By.XPATH, xpath)
+                        for el in elements:
+                            if el.is_displayed() and el.is_enabled():
+                                # Verify it contains delivery-related content
+                                try:
+                                    text = el.text.lower()
+                                    class_attr = el.get_attribute('class') or ''
+                                    if 'U6seEY' in class_attr or 'arriving' in text or 'delivery' in text or 'tomorrow' in text or 'today' in text:
+                                        delivery_element = el
+                                        self.logger.info(f"Found delivery element via XPath: {xpath[:50]}")
+                                        break
+                                except Exception:
+                                    if 'U6seEY' in class_attr:
+                                        delivery_element = el
+                                        break
+                        if delivery_element:
+                            break
+                    except Exception:
+                        continue
+                
+                # If XPath didn't work, try CSS selectors
+                if not delivery_element:
+                    for css_selector in delivery_css_selectors:
+                        try:
+                            elements = self.driver.find_elements(By.CSS_SELECTOR, css_selector)
+                            for el in elements:
+                                if el.is_displayed() and el.is_enabled():
+                                    class_attr = el.get_attribute('class') or ''
+                                    # If it's the span, get the parent U6seEY div
+                                    if '_osffw' in class_attr or 'Ck4P40' in class_attr:
+                                        try:
+                                            parent = el.find_element(By.XPATH, "./ancestor::div[contains(@class,'U6seEY')]")
+                                            if parent.is_displayed() and parent.is_enabled():
+                                                delivery_element = parent
+                                                self.logger.info(f"Found delivery element via CSS (parent): {css_selector}")
+                                                break
+                                        except Exception:
+                                            pass
+                                    elif 'U6seEY' in class_attr:
+                                        delivery_element = el
+                                        self.logger.info(f"Found delivery element via CSS: {css_selector}")
+                                        break
+                            if delivery_element:
+                                break
+                        except Exception:
+                            continue
+                
+                if delivery_element:
+                    # Scroll into view
+                    self.driver.execute_script("arguments[0].scrollIntoView({block:'center', behavior:'smooth'});", delivery_element)
+                    time.sleep(0.5)
+                    
+                    # Try multiple click strategies
+                    clicked = False
+                    try:
+                        # Strategy 1: JavaScript click
+                        self.driver.execute_script("arguments[0].click();", delivery_element)
+                        clicked = True
+                        self.logger.info("Delivery date clicked (JS click)")
+                    except Exception as e1:
+                        try:
+                            # Strategy 2: Regular click
+                            delivery_element.click()
+                            clicked = True
+                            self.logger.info("Delivery date clicked (regular click)")
+                        except Exception as e2:
+                            try:
+                                # Strategy 3: Click on the delivery text span inside
+                                inner_span = delivery_element.find_element(By.CSS_SELECTOR, "span._osffw")
+                                self.driver.execute_script("arguments[0].click();", inner_span)
+                                clicked = True
+                                self.logger.info("Delivery date clicked (via inner span)")
+                            except Exception as e3:
+                                try:
+                                    # Strategy 4: Click on the right chevron
+                                    chevron = delivery_element.find_element(By.CSS_SELECTOR, "img.lQTgKD")
+                                    self.driver.execute_script("arguments[0].click();", chevron)
+                                    clicked = True
+                                    self.logger.info("Delivery date clicked (via chevron)")
+                                except Exception as e4:
+                                    self.logger.warning(f"All click strategies failed: JS={e1}, Regular={e2}, Span={e3}, Chevron={e4}")
+                    
+                    if clicked:
+                        time.sleep(2)
+                    else:
+                        self.logger.warning("Could not click delivery date element")
+                else:
+                    self.logger.warning("Delivery date element not found")
+                    
             except Exception as e:
                 self.logger.warning(f"Could not click delivery date: {e}")
 
@@ -1360,22 +1997,16 @@ class FlipkartSniper:
             if self.order_id and (self.order_id.startswith("OD") or self.order_id == "OD_SUCCESS_ORDERS_PAGE_OPEN"):
                 try:
                     timestamp = int(time.time())
-                    screenshot_path = f"screenshots/order_{self.order_id}_{timestamp}.png"
+                    screenshot_filename = f"order_{self.order_id}_{timestamp}.png"
+                    screenshot_path = os.path.join(self.screenshots_dir, screenshot_filename)
                     self.driver.save_screenshot(screenshot_path)
                     self.logger.log(f"Screenshot saved: {screenshot_path}", "SUCCESS")
-                    
-                    # Upload screenshot and get URL
-                    screenshot_url = FlipkartSniper.upload_screenshot_to_imgbb(
-                        screenshot_path, FlipkartSniper.IMGBB_API_KEY
-                    )
-                    if screenshot_url:
-                        self.screenshot_url = screenshot_url
-                        self.logger.log(f"Screenshot URL: {screenshot_url}", "SUCCESS")
-                    else:
-                        self.screenshot_url = "NONE"
-                        self.logger.warning("Screenshot upload failed, using NONE")
+                    # Generate HTTP URL for local Flask server (like imgbb but local)
+                    base = self.screenshot_base_url.rstrip("/")
+                    self.screenshot_url = f"{base}/{screenshot_filename}"
+                    self.logger.log(f"Screenshot URL: {self.screenshot_url}", "SUCCESS")
                 except Exception as e:
-                    self.logger.error(f"Could not capture/upload screenshot: {e}")
+                    self.logger.error(f"Could not capture screenshot: {e}")
                     self.screenshot_url = "NONE"
             
             self.logger.step("CHECKOUT", "SUCCESS")
@@ -1394,22 +2025,16 @@ class FlipkartSniper:
                     # Take screenshot even if order ID extraction failed
                     try:
                         timestamp = int(time.time())
-                        screenshot_path = f"screenshots/order_{self.order_id}_{timestamp}.png"
+                        screenshot_filename = f"order_{self.order_id}_{timestamp}.png"
+                        screenshot_path = os.path.join(self.screenshots_dir, screenshot_filename)
                         self.driver.save_screenshot(screenshot_path)
                         self.logger.log(f"Screenshot saved: {screenshot_path}", "SUCCESS")
-                        
-                        # Upload screenshot and get URL
-                        screenshot_url = FlipkartSniper.upload_screenshot_to_imgbb(
-                            screenshot_path, FlipkartSniper.IMGBB_API_KEY
-                        )
-                        if screenshot_url:
-                            self.screenshot_url = screenshot_url
-                            self.logger.log(f"Screenshot URL: {screenshot_url}", "SUCCESS")
-                        else:
-                            self.screenshot_url = "NONE"
-                            self.logger.warning("Screenshot upload failed, using NONE")
+                        # Public/local URL (expects a static server at SCREENSHOT_BASE_URL)
+                        base = self.screenshot_base_url.rstrip("/")
+                        self.screenshot_url = f"{base}/{screenshot_filename}"
+                        self.logger.log(f"Screenshot URL (local HTTP): {self.screenshot_url}", "SUCCESS")
                     except Exception as screenshot_error:
-                        self.logger.error(f"Could not capture/upload screenshot: {screenshot_error}")
+                        self.logger.error(f"Could not capture screenshot: {screenshot_error}")
                         self.screenshot_url = "NONE"
                     
                     self.logger.step("CHECKOUT", "SUCCESS")
@@ -1443,8 +2068,9 @@ class FlipkartSniper:
             
             try:
                 self.driver = webdriver.Chrome(service=self.service, options=self.options)
-                # Set page load timeout to prevent hanging
-                self.driver.set_page_load_timeout(30)
+                # Set page load timeout to prevent hanging - Increased to 120s for stability
+                self.driver.set_page_load_timeout(120)
+                self.driver.set_script_timeout(120)
                 # Set implicit wait
                 self.driver.implicitly_wait(5)
             except WebDriverException as e:
@@ -1488,13 +2114,12 @@ class FlipkartSniper:
             if self.fatal_error:
                 return self.fatal_code or "ADD_PRODUCTS_FAILED"
 
-            # 5) Apply cart deal (Deal Booster)
-            if self.deal_keyword not in ("", None):
-                time.sleep(2)
-                self.step_apply_cart_deals(self.deal_keyword)
-                if self.fatal_error:
-                    return self.fatal_code or "DEAL_APPLY_FAILED"
-                time.sleep(1.5)
+            # 5) Apply cart deal (Deal Booster) - ALWAYS try to apply deals
+            time.sleep(2)
+            self.step_apply_cart_deals(self.deal_keyword)  # Works with or without keyword
+            if self.fatal_error:
+                return self.fatal_code or "DEAL_APPLY_FAILED"
+            time.sleep(1.5)
 
             # 6) Apply coupon (MANUAL or AUTO APPLY)
             if self.coupon not in ("", None, "None"):

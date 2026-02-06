@@ -775,7 +775,7 @@ LOGIN_TEMPLATE = """
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            background: #0f1419;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -783,92 +783,94 @@ LOGIN_TEMPLATE = """
             padding: 20px;
         }
         .login-container {
-            background: rgba(35, 42, 70, 0.9);
-            border: 2px solid rgba(91, 124, 255, 0.3);
-            border-radius: 20px;
-            padding: 50px 40px;
-            max-width: 450px;
+            background: rgba(28, 36, 46, 0.98);
+            border: 1px solid rgba(48, 54, 61, 0.8);
+            border-radius: 16px;
+            padding: 48px 40px;
+            max-width: 420px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-            animation: slideUp 0.6s ease-out;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.5s ease-out;
         }
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .logo { text-align: center; margin-bottom: 40px; }
+        .logo { text-align: center; margin-bottom: 36px; }
         .logo h1 {
-            font-size: 2.5em;
-            background: linear-gradient(135deg, #5b7cff 0%, #7b9cff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
+            font-size: 2.2em;
+            color: #e7e9eb;
+            margin-bottom: 8px;
         }
-        .logo p { color: #8b949e; font-size: 1em; }
-        .form-group { margin-bottom: 25px; }
+        .logo p { color: #8b949e; font-size: 0.95em; }
+        .form-group { margin-bottom: 22px; }
         label {
             display: block;
             margin-bottom: 8px;
-            color: #e8eaf6;
-            font-weight: 600;
-            font-size: 0.95em;
+            color: #e7e9eb;
+            font-weight: 500;
+            font-size: 0.9em;
         }
         input {
             width: 100%;
-            padding: 15px 18px;
-            border: 2px solid rgba(91, 124, 255, 0.3);
-            border-radius: 10px;
-            background: rgba(26, 31, 58, 0.95);
-            color: #e8eaf6;
+            padding: 14px 16px;
+            border: 1px solid rgba(48, 54, 61, 0.8);
+            border-radius: 8px;
+            background: rgba(15, 20, 25, 0.9);
+            color: #e7e9eb;
             font-size: 1em;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         input:focus {
             outline: none;
-            border-color: #5b7cff;
-            box-shadow: 0 0 0 4px rgba(91, 124, 255, 0.1);
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
         }
+        input::placeholder { color: #6e7681; }
         button {
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #5b7cff 0%, #7b9cff 100%);
+            padding: 14px;
+            background: #238636;
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 1.1em;
+            border-radius: 8px;
+            font-size: 1em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
+            transition: all 0.2s ease;
+            margin-top: 8px;
         }
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(91, 124, 255, 0.5);
+            background: #2ea043;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
         }
 .error-message,
 .success-message {
-            padding: 12px;
+            padding: 12px 14px;
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
+            font-size: 0.9em;
         }
 .error-message {
-    background: rgba(255, 23, 68, 0.18);
-    border: 2px solid #ff1744;
-    color: #ff5252;
+    background: rgba(248, 81, 73, 0.1);
+    border: 1px solid rgba(248, 81, 73, 0.4);
+    color: #f85149;
 }
 .success-message {
-    background: rgba(23, 133, 130, 0.18);
-    border: 2px solid #178582;
-    color: #178582;
+    background: rgba(63, 185, 80, 0.1);
+    border: 1px solid rgba(63, 185, 80, 0.4);
+    color: #3fb950;
         }
         .admin-link {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 24px;
         }
         .admin-link a {
-            color: #5b7cff;
+            color: #58a6ff;
             text-decoration: none;
             font-size: 0.9em;
         }
@@ -934,13 +936,14 @@ ADMIN_TEMPLATE = """
         h1 {
             margin: 0 0 12px;
             letter-spacing: 0.4px;
+            color: #e7e9eb;
         }
         .card {
-            background: rgba(255,255,255,0.04);
-            border: 1.5px solid #1f2f46;
-            border-radius: 14px;
+            background: rgba(28, 36, 46, 0.95);
+            border: 1px solid rgba(48, 54, 61, 0.8);
+            border-radius: 12px;
             padding: 18px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.28);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
             margin-bottom: 18px;
         }
         .row {
@@ -949,34 +952,33 @@ ADMIN_TEMPLATE = """
             gap: 12px;
             margin-top: 12px;
         }
-        label { display:block; margin-bottom:6px; font-weight:600; }
+        label { display:block; margin-bottom:6px; font-weight:500; color:#e7e9eb; }
         input, button {
             width: 100%;
             padding: 12px;
-            border-radius: 12px;
-            border: 1.5px solid #1f2f46;
-            background: rgba(255,255,255,0.05);
-            color: #e6edf3;
-            font-size: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(48, 54, 61, 0.8);
+            background: rgba(15, 20, 25, 0.9);
+            color: #e7e9eb;
+            font-size: 14px;
             box-sizing: border-box;
         }
-        input:focus { outline:none; border-color:#178582; box-shadow: 0 0 0 4px rgba(23,133,130,0.18); }
+        input:focus { outline:none; border-color:#58a6ff; box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15); }
         button {
-            background: linear-gradient(135deg, #178582 0%, #1f9e99 100%);
+            background: #238636;
             cursor: pointer;
-            font-weight: 700;
+            font-weight: 600;
             border: none;
-            box-shadow: 0 10px 24px rgba(23,133,130,0.35);
         }
-        button:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(23,133,130,0.45); }
+        button:hover { background: #2ea043; transform: translateY(-1px); }
         table { width:100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { padding: 10px 8px; border-bottom: 1px solid #1f2f46; text-align:left; }
-        th { color: #9fb3c8; font-weight:700; }
-        .pill { padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; }
-        .pill.ok { background: rgba(23,133,130,0.16); color:#178582; border:1px solid rgba(23,133,130,0.35); }
-        .pill.bad { background: rgba(214,90,79,0.16); color:#d65a4f; border:1px solid rgba(214,90,79,0.35); }
+        th, td { padding: 10px 8px; border-bottom: 1px solid rgba(48, 54, 61, 0.8); text-align:left; }
+        th { color: #8b949e; font-weight:600; }
+        .pill { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .pill.ok { background: rgba(63, 185, 80, 0.12); color:#3fb950; border:1px solid rgba(63, 185, 80, 0.3); }
+        .pill.bad { background: rgba(248, 81, 73, 0.12); color:#f85149; border:1px solid rgba(248, 81, 73, 0.3); }
         .flex { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-        .muted { color:#9fb3c8; font-size:14px; }
+        .muted { color:#8b949e; font-size:14px; }
         .toggle {
             display:inline-flex;
             align-items:center;
@@ -1258,7 +1260,7 @@ function extendUser(btn){
 
 # [INSERT THE ENTIRE MAIN_TEMPLATE FROM PREVIOUS ARTIFACT HERE - IT'S TOO LONG TO PASTE AGAIN]
 # Copy the MAIN_TEMPLATE variable from the previous response above
-MAIN_TEMPLATE = """
+MAIN_TEMPLATE = r"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -1285,43 +1287,47 @@ body {
 }
 
 :root {
-    /* New theme: Dark classic blue, turquoise, gold */
-    --bg: #0A1828;
-    --bg2: #0f2236;
-    --card: #11263c;
-    --card-hover: #15304b;
-    --text: #e6edf3;
-    --text-muted: #9fb3c8;
-    --blue: #178582;         /* turquoise accent */
-    --blue-hover: #1f9e99;
-    --success: #178582;
-    --danger: #d65a4f;
-    --warning: #BFA181;      /* gold accent */
-    --border: #1f2f46;
-    --border-hover: #2a3c59;
-    --shadow: rgba(6, 12, 20, 0.45);
-    --glass: rgba(255, 255, 255, 0.04);
-    --glass-strong: rgba(255, 255, 255, 0.08);
-    --highlight: rgba(23,133,130,0.2);
-    --backdrop: rgba(0,0,0,0.65);
+    /* 🎨 SUBTLE PROFESSIONAL SLATE THEME */
+    --bg: #0f1419;                           /* Deep charcoal */
+    --bg2: #151b23;                          /* Slightly lighter */
+    --card: rgba(28, 36, 46, 0.95);          /* Slate cards */
+    --card-hover: rgba(36, 46, 58, 0.98);    /* Card hover */
+    --text: #e7e9eb;                         /* Soft off-white */
+    --text-muted: #8b949e;                   /* GitHub-style muted */
+    --blue: #58a6ff;                         /* Soft blue accent */
+    --blue-hover: #79b8ff;                   /* Lighter blue */
+    --success: #3fb950;                      /* Soft green */
+    --danger: #f85149;                       /* Soft red */
+    --warning: #d29922;                      /* Muted gold */
+    --border: rgba(48, 54, 61, 0.8);         /* Subtle border */
+    --border-hover: rgba(68, 76, 86, 0.9);
+    --shadow: rgba(0, 0, 0, 0.3);
+    --glass: rgba(255, 255, 255, 0.03);
+    --glass-strong: rgba(255, 255, 255, 0.06);
+    --highlight: rgba(88, 166, 255, 0.1);
+    --backdrop: rgba(0, 0, 0, 0.7);
+    /* Subtle gradients */
+    --gradient-primary: linear-gradient(135deg, #58a6ff 0%, #79b8ff 100%);
+    --gradient-success: linear-gradient(135deg, #3fb950 0%, #56d364 100%);
+    --gradient-danger: linear-gradient(135deg, #f85149 0%, #ff7b72 100%);
 }
 
 .light {
-    /* Light variant harmonized with palette */
-    --bg: #f5f7fa;
-    --bg2: #e9eef4;
-    --card: #ffffff;
-    --card-hover: #f0f4f9;
-    --text: #0A1828;
-    --text-muted: #4a5b70;
-    --blue: #178582;
-    --blue-hover: #1f9e99;
-    --success: #178582;
-    --danger: #c94b41;
-    --warning: #BFA181;
-    --border: #d6dde6;
-    --border-hover: #c2ccd8;
-    --shadow: rgba(0, 0, 0, 0.12);
+    /* Light variant - clean professional */
+    --bg: #ffffff;
+    --bg2: #f6f8fa;
+    --card: rgba(255, 255, 255, 1);
+    --card-hover: rgba(246, 248, 250, 1);
+    --text: #24292f;
+    --text-muted: #57606a;
+    --blue: #0969da;
+    --blue-hover: #218bff;
+    --success: #1a7f37;
+    --danger: #cf222e;
+    --warning: #9a6700;
+    --border: rgba(208, 215, 222, 0.8);
+    --border-hover: rgba(175, 184, 193, 0.9);
+    --shadow: rgba(0, 0, 0, 0.08);
 }
 
 /* Splash Screen */
@@ -1644,32 +1650,53 @@ button:disabled {
 }
 
 pre {
-    background: rgba(0, 0, 0, 0.8);
-    color: var(--success);
+    background: #0d1117;
+    color: #e6edf3;
     height: 300px;
     overflow-y: auto;
     padding: 20px;
     font-size: 14px;
     border-radius: 12px;
-    border: 2px solid var(--border);
-    font-family: 'Courier New', monospace;
+    border: 1px solid var(--border);
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
     line-height: 1.6;
     box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+    white-space: pre-wrap;
+    word-break: break-all;
 }
 
 pre::-webkit-scrollbar {
-    width: 8px;
+    width: 10px;
+    height: 10px;
 }
 
 pre::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
+    background: #161b22;
 }
 
 pre::-webkit-scrollbar-thumb {
-    background: var(--blue);
-    border-radius: 10px;
+    background: #30363d;
+    border-radius: 5px;
+    border: 2px solid #161b22;
 }
+
+pre::-webkit-scrollbar-thumb:hover {
+    background: #484f58;
+}
+
+.log-line {
+    display: block;
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.log-info { color: #8b949e; }
+.log-success { color: #3fb950; font-weight: 500; }
+.log-warning { color: #d29922; font-weight: 500; }
+.log-error { color: #f85149; font-weight: 600; background: rgba(248, 81, 73, 0.1); padding: 2px 4px; border-radius: 4px; }
+.log-debug { color: #d2a8ff; }
+.log-timestamp { color: #58a6ff; font-weight: 600; margin-right: 8px; font-size: 0.9em; opacity: 0.8; }
+.log-highlight { background: rgba(255, 255, 0, 0.2); color: #fff; text-decoration: underline; }
 
 .hidden {
     display: none;
@@ -2053,26 +2080,438 @@ pre::-webkit-scrollbar-thumb {
     animation: fadeInUp 0.6s ease-out;
 }
 
-.report-link {
-    display: block;
-    padding: 16px 18px;
-    margin-bottom: 15px;
-    background: linear-gradient(135deg, rgba(23,133,130,0.12) 0%, rgba(17,38,60,0.8) 100%);
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    color: var(--text);
-    text-decoration: none;
-    transition: all 0.25s ease;
-    font-weight: 600;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-    backdrop-filter: blur(12px);
+/* ================= REPORTS SECTION - REDESIGNED ================= */
+
+.reports-header {
+    margin-bottom: 24px;
 }
 
-.report-link:hover {
-    background: linear-gradient(135deg, var(--blue) 0%, var(--blue-hover) 100%);
-    color: #fff;
-    transform: translateY(-2px) scale(1.01);
-    box-shadow: 0 14px 32px rgba(23,133,130,0.35);
+.reports-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.reports-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95em;
+    margin-top: 4px;
+}
+
+.btn-refresh {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(88, 166, 255, 0.1);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    border-radius: 10px;
+    color: var(--blue);
+    font-weight: 600;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-refresh:hover {
+    background: rgba(88, 166, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.refresh-icon {
+    transition: transform 0.3s ease;
+}
+
+.btn-refresh:hover .refresh-icon {
+    transform: rotate(180deg);
+}
+
+/* Reports Stats Bar */
+.reports-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    padding: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.reports-stats-bar .stat-item {
+    text-align: center;
+    padding: 8px;
+}
+
+.reports-stats-bar .stat-label {
+    display: block;
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reports-stats-bar .stat-value {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--blue);
+}
+
+/* Reports Content Card */
+.reports-content-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.reports-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.reports-content-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.title-icon {
+    font-size: 1.2em;
+}
+
+.reports-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Reports Grid */
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    padding: 20px;
+}
+
+.report-card {
+    background: rgba(28, 36, 46, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.report-card:hover {
+    border-color: var(--blue);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.report-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--blue) 0%, var(--success) 100%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.report-card:hover::before {
+    opacity: 1;
+}
+
+.report-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.report-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(88, 166, 255, 0.12);
+    border: 1px solid rgba(88, 166, 255, 0.25);
+    border-radius: 12px;
+    font-size: 1.5em;
+    flex-shrink: 0;
+}
+
+.report-title {
+    flex: 1;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.report-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.report-info-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85em;
+}
+
+.report-info-item .label {
+    color: var(--text-muted);
+}
+
+.report-info-item .value {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.report-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.report-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.report-btn-view {
+    background: var(--blue);
+    color: white;
+}
+
+.report-btn-view:hover {
+    background: var(--blue-hover);
+    transform: translateY(-1px);
+}
+
+.report-btn-download {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.report-btn-download:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--text-muted);
+}
+
+/* Report Modal */
+.report-modal-content {
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+}
+
+.report-table-container {
+    flex: 1;
+    overflow: auto;
+    padding: 20px;
+    background: var(--bg);
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.report-table th {
+    position: sticky;
+    top: 0;
+    background: var(--bg2);
+    padding: 14px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+}
+
+.report-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+
+.report-table tr:hover td {
+    background: rgba(88, 166, 255, 0.05);
+}
+
+.report-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.2);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Empty State */
+.reports-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.reports-empty-icon {
+    font-size: 4em;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.reports-empty-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+/* Mobile Reports */
+@media (max-width: 768px) {
+    .reports-header-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-refresh {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .reports-stats-bar {
+        grid-template-columns: repeat(3, 1fr);
+        padding: 12px;
+    }
+    
+    .reports-stats-bar .stat-value {
+        font-size: 1.2em;
+    }
+    
+    .reports-grid {
+        grid-template-columns: 1fr;
+        padding: 16px;
+        gap: 12px;
+    }
+    
+    .report-card {
+        padding: 16px;
+    }
+    
+    .report-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 1.3em;
+    }
+    
+    .report-actions {
+        flex-direction: column;
+    }
+    
+    .report-btn {
+        padding: 14px;
+    }
+    
+    .report-modal-content {
+        max-width: 100%;
+        max-height: 95vh;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .report-table {
+        font-size: 0.8em;
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .report-modal-footer {
+        flex-direction: column;
+        padding: 14px 16px;
+    }
+    
+    .report-modal-footer > div {
+        width: 100%;
+        display: flex;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .reports-stats-bar .stat-label {
+        font-size: 0.7em;
+    }
+    
+    .reports-stats-bar .stat-value {
+        font-size: 1em;
+    }
+    
+    .report-card {
+        padding: 14px;
+    }
+    
+    .report-table th,
+    .report-table td {
+        padding: 8px 6px;
+        font-size: 0.75em;
+    }
 }
 
 /* Reports Grid Layout */
@@ -2192,128 +2631,171 @@ pre::-webkit-scrollbar-thumb {
 /* Logs page glass layout */
 .logs-shell {
     display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 16px;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    height: calc(100vh - 200px);
+    min-height: 500px;
 }
+
 .logs-panel {
     border: 1.5px solid var(--border);
-    border-radius: 14px;
-    padding: 12px;
-    background: var(--glass);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 10px 28px rgba(0,0,0,0.25);
-    max-height: 460px;
-    overflow-y: auto;
+    border-radius: 16px;
+    padding: 16px;
+    background: var(--bg2);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
-.logs-viewer {
-    height: 440px;
-    overflow-y: auto;
-    background: var(--glass-strong);
-    color: var(--text);
+
+.logs-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.logs-viewer-container {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+    background: #0d1117;
     border: 1.5px solid var(--border);
-    border-radius: 14px;
-    padding: 14px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
 }
-.logs-mobile-actions {
-    display: none;
-    gap: 8px;
-    margin-bottom: 12px;
+
+.logs-viewer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #161b22;
+    border-bottom: 1px solid var(--border);
+    gap: 15px;
+    flex-wrap: wrap;
 }
+
+.logs-viewer-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logs-search-box {
+    position: relative;
+    flex: 1;
+    max-width: 300px;
+}
+
+.logs-search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 35px;
+    font-size: 0.9em;
+    height: 36px;
+    margin: 0;
+    background: #0d1117;
+    border: 1px solid var(--border);
+}
+
+.logs-search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.logs-viewer {
+    flex: 1;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    height: 100%;
+    background: transparent;
+    padding: 15px 20px;
+    box-shadow: none;
+}
+
+.logs-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
 .logs-list-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: rgba(255,255,255,0.03);
+    padding: 12px 14px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    margin-bottom: 6px;
     cursor: pointer;
-    transition: all 0.25s ease;
-}
-.logs-list-item:hover {
-    border-color: var(--blue);
-    transform: translateX(4px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-}
-.logs-list-item.active {
-    border-color: var(--blue);
-    background: rgba(23,133,130,0.08);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255,255,255,0.03);
 }
 
-@media (max-width: 768px) {
+.logs-list-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: var(--border);
+    transform: translateY(-1px);
+}
+
+.logs-list-item.active {
+    background: var(--highlight);
+    border-color: var(--blue);
+    position: relative;
+}
+
+.logs-list-item.active::after {
+    content: '';
+    position: absolute;
+    left: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 20px;
+    background: var(--blue);
+    border-radius: 0 4px 4px 0;
+}
+
+.logs-file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.logs-file-name {
+    font-weight: 600;
+    font-size: 0.95em;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.logs-file-meta {
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+@media (max-width: 992px) {
     .logs-shell {
         grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    .logs-panel {
-        max-height: 200px;
-        padding: 10px;
-    }
-    .logs-viewer {
         height: auto;
-        min-height: 300px;
-        max-height: calc(100vh - 400px);
-        padding: 12px;
-        font-size: 0.85em;
-    }
-    .logs-mobile-actions {
-        display: flex;
-        width: 100%;
-    }
-    .logs-mobile-actions select {
-        flex: 1;
-        min-width: 0;
-    }
-    .logs-desktop-refresh {
-        display: none !important;
-    }
-    .logs-list-item {
-        padding: 8px 10px;
-        font-size: 0.9em;
-    }
-    #logs-selected-name {
-        font-size: 0.95em;
-    }
-}
-
-@media (max-width: 480px) {
-    .logs-shell {
-        gap: 10px;
     }
     .logs-panel {
-        max-height: 180px;
-        padding: 8px;
+        max-height: 250px;
     }
-    .logs-viewer {
-        min-height: 250px;
-        max-height: calc(100vh - 350px);
-        padding: 10px;
-        font-size: 0.8em;
-        line-height: 1.4;
-    }
-    .logs-mobile-actions {
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-    }
-    .logs-mobile-actions select,
-    .logs-mobile-actions button {
-        width: 100%;
-    }
-    .logs-list-item {
-        padding: 6px 8px;
-        font-size: 0.85em;
-    }
-    #logs-selected-name {
-        font-size: 0.85em;
-    }
-    #logs-download {
-        padding: 8px 12px;
-        font-size: 0.85em;
-    }
-    h3 {
-        font-size: 1.1em !important;
+    .logs-viewer-container {
+        height: 500px;
     }
 }
 
@@ -2907,20 +3389,20 @@ body.tour-lock {
     }
 }
 
-/* ==================== SPLASH SCREEN WITH GLITCH EFFECT ==================== */
+/* ==================== CYBERPUNK SPLASH SCREEN ==================== */
 .splash-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000000;
+    background: #0a0a0f;
     z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    animation: fadeOut 0.5s ease-out 2.5s forwards;
+    animation: fadeOut 0.6s ease-out 3.5s forwards;
 }
 
 .splash-background {
@@ -2931,62 +3413,90 @@ body.tour-lock {
     height: 100%;
     overflow: hidden;
     z-index: 1;
-    background: #000000;
+    background: 
+        linear-gradient(0deg, transparent 24%, rgba(0, 255, 255, 0.05) 25%, rgba(0, 255, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, 0.05) 75%, rgba(0, 255, 255, 0.05) 76%, transparent 77%, transparent),
+        linear-gradient(90deg, transparent 24%, rgba(0, 255, 255, 0.05) 25%, rgba(0, 255, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, 0.05) 75%, rgba(0, 255, 255, 0.05) 76%, transparent 77%, transparent);
+    background-size: 50px 50px;
+    background-color: #0a0a0f;
+    animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 50px 50px; }
+}
+
+.splash-background::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.1), transparent 70%);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
 }
 
 .splash-content {
     text-align: center;
     position: relative;
     z-index: 10;
-    animation: contentFadeIn 0.8s ease-out;
+    animation: contentFadeIn 0.8s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @keyframes contentFadeIn {
     0% {
         opacity: 0;
+        transform: scale(0.95);
     }
     100% {
         opacity: 1;
+        transform: scale(1);
     }
 }
 
 .splash-title {
-    font-size: 5rem;
+    font-size: 5.5rem;
     font-weight: 900;
     margin: 0;
-    margin-bottom: 20px;
-    font-family: 'Courier New', monospace;
+    margin-bottom: 30px;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
     text-transform: uppercase;
-    letter-spacing: 8px;
+    letter-spacing: 12px;
     position: relative;
-    color: #00ff00;
+    color: #00ffff;
     text-shadow: 
-        0 0 10px #00ff00,
-        0 0 20px #00ff00,
-        0 0 30px #00ff00;
+        0 0 10px #00ffff,
+        0 0 20px #00ffff,
+        0 0 40px #00ffff,
+        0 0 80px #00ffff,
+        0 0 120px #00ffff;
     animation: 
-        titleArrival 1.2s ease-out forwards,
-        glitch 2s infinite 1.2s,
-        titleExit 0.8s ease-in 2.2s forwards;
+        titleEntry 1.5s cubic-bezier(0.23, 1, 0.32, 1) forwards,
+        ultraGlitch 3s infinite 1.5s,
+        titleExit 0.8s ease-in 2.8s forwards;
     opacity: 0;
-    transform: scale(0.5) translateY(50px);
+    transform: scale(0.3) translateY(100px);
+    filter: blur(20px);
 }
 
-@keyframes titleArrival {
+@keyframes titleEntry {
     0% {
         opacity: 0;
-        transform: scale(0.3) translateY(100px) rotateX(90deg);
-        filter: blur(20px);
+        transform: scale(0.3) translateY(100px) rotateX(80deg) rotateZ(-5deg);
+        filter: blur(20px) brightness(0.5);
     }
-    50% {
-        opacity: 0.8;
-        transform: scale(1.1) translateY(-10px) rotateX(0deg);
-        filter: blur(5px);
+    60% {
+        opacity: 1;
+        transform: scale(1.05) translateY(-15px) rotateX(0deg) rotateZ(0deg);
+        filter: blur(2px) brightness(1.3);
     }
     100% {
         opacity: 1;
-        transform: scale(1) translateY(0) rotateX(0deg);
-        filter: blur(0);
+        transform: scale(1) translateY(0) rotateX(0deg) rotateZ(0deg);
+        filter: blur(0) brightness(1);
     }
 }
 
@@ -2994,10 +3504,12 @@ body.tour-lock {
     0% {
         opacity: 1;
         transform: scale(1) translateY(0);
+        filter: blur(0);
     }
     100% {
         opacity: 0;
-        transform: scale(0.8) translateY(-50px);
+        transform: scale(0.7) translateY(-80px);
+        filter: blur(10px);
     }
 }
 
@@ -3009,272 +3521,142 @@ body.tour-lock {
     left: 0;
     width: 100%;
     height: 100%;
+    mix-blend-mode: screen;
 }
 
 .splash-title::before {
-    left: 2px;
-    text-shadow: -2px 0 #ff00ff;
-    clip: rect(44px, 450px, 56px, 0);
-    animation: glitch-anim 5s infinite linear alternate-reverse;
+    left: 3px;
+    text-shadow: -3px 0 #ff00ff;
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    animation: glitchTop 0.5s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .splash-title::after {
-    left: -2px;
-    text-shadow: -2px 0 #00ffff, 2px 2px #ff00ff;
-    clip: rect(44px, 450px, 56px, 0);
-    animation: glitch-anim2 1s infinite linear alternate-reverse;
+    left: -3px;
+    text-shadow: 3px 0 #00ff00;
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    animation: glitchBottom 0.3s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-@keyframes glitch {
-    0%, 100% {
-        text-shadow: 
-            0.05em 0 0 #00fffc,
-            -0.03em -0.04em 0 #fc00ff,
-            0.025em 0.04em 0 #fffc00;
-    }
-    15% {
-        text-shadow: 
-            0.05em 0 0 #00fffc,
-            -0.03em -0.04em 0 #fc00ff,
-            0.025em 0.04em 0 #fffc00;
-    }
-    16% {
-        text-shadow: 
-            -0.05em -0.025em 0 #00fffc,
-            0.025em 0.035em 0 #fc00ff,
-            -0.05em -0.05em 0 #fffc00;
-    }
-    49% {
-        text-shadow: 
-            -0.05em -0.025em 0 #00fffc,
-            0.025em 0.035em 0 #fc00ff,
-            -0.05em -0.05em 0 #fffc00;
-    }
-    50% {
-        text-shadow: 
-            0.05em 0.035em 0 #00fffc,
-            0.03em 0 0 #fc00ff,
-            0 -0.04em 0 #fffc00;
-    }
-    99% {
-        text-shadow: 
-            0.05em 0.035em 0 #00fffc,
-            0.03em 0 0 #fc00ff,
-            0 -0.04em 0 #fffc00;
-    }
-    100% {
-        text-shadow: 
-            -0.05em 0 0 #00fffc,
-            -0.03em -0.04em 0 #fc00ff,
-            -0.025em -0.04em 0 #fffc00;
-    }
-}
-
-@keyframes glitch-anim {
-    0% {
-        clip: rect(31px, 9999px, 94px, 0);
-        transform: skew(0.5deg);
-    }
-    5% {
-        clip: rect(92px, 9999px, 76px, 0);
-        transform: skew(0.8deg);
+@keyframes ultraGlitch {
+    0%, 50%, 100% {
+        transform: translate(0);
+        filter: hue-rotate(0deg);
     }
     10% {
-        clip: rect(54px, 9999px, 66px, 0);
-        transform: skew(0.3deg);
-    }
-    15% {
-        clip: rect(88px, 9999px, 98px, 0);
-        transform: skew(0.9deg);
+        transform: translate(-5px, 5px);
+        filter: hue-rotate(90deg);
     }
     20% {
-        clip: rect(1px, 9999px, 83px, 0);
-        transform: skew(0.4deg);
-    }
-    25% {
-        clip: rect(78px, 9999px, 94px, 0);
-        transform: skew(0.6deg);
+        transform: translate(5px, -5px);
+        filter: hue-rotate(180deg);
     }
     30% {
-        clip: rect(23px, 9999px, 92px, 0);
-        transform: skew(0.5deg);
-    }
-    35% {
-        clip: rect(90px, 9999px, 98px, 0);
-        transform: skew(0.7deg);
+        transform: translate(-5px, -5px);
+        filter: hue-rotate(270deg);
     }
     40% {
-        clip: rect(1px, 9999px, 100px, 0);
-        transform: skew(0.4deg);
-    }
-    45% {
-        clip: rect(83px, 9999px, 94px, 0);
-        transform: skew(0.5deg);
-    }
-    50% {
-        clip: rect(40px, 9999px, 73px, 0);
-        transform: skew(0.5deg);
-    }
-    55% {
-        clip: rect(62px, 9999px, 99px, 0);
-        transform: skew(0.2deg);
-    }
-    60% {
-        clip: rect(28px, 9999px, 84px, 0);
-        transform: skew(0.4deg);
-    }
-    65% {
-        clip: rect(86px, 9999px, 94px, 0);
-        transform: skew(0.8deg);
-    }
-    70% {
-        clip: rect(30px, 9999px, 96px, 0);
-        transform: skew(0.6deg);
-    }
-    75% {
-        clip: rect(88px, 9999px, 98px, 0);
-        transform: skew(0.3deg);
-    }
-    80% {
-        clip: rect(1px, 9999px, 100px, 0);
-        transform: skew(0.7deg);
-    }
-    85% {
-        clip: rect(83px, 9999px, 94px, 0);
-        transform: skew(0.5deg);
-    }
-    90% {
-        clip: rect(40px, 9999px, 73px, 0);
-        transform: skew(0.4deg);
-    }
-    95% {
-        clip: rect(62px, 9999px, 99px, 0);
-        transform: skew(0.2deg);
-    }
-    100% {
-        clip: rect(28px, 9999px, 84px, 0);
-        transform: skew(0.4deg);
+        transform: translate(5px, 5px);
+        filter: hue-rotate(360deg);
     }
 }
 
-@keyframes glitch-anim2 {
+@keyframes glitchTop {
     0% {
-        clip: rect(65px, 9999px, 100px, 0);
-        transform: skew(0.6deg);
-    }
-    5% {
-        clip: rect(96px, 9999px, 90px, 0);
-        transform: skew(0.3deg);
+        clip-path: polygon(0 0, 100% 0, 100% 42%, 0 44%);
+        transform: translate(0);
     }
     10% {
-        clip: rect(28px, 9999px, 84px, 0);
-        transform: skew(0.5deg);
-    }
-    15% {
-        clip: rect(66px, 9999px, 100px, 0);
-        transform: skew(0.4deg);
+        clip-path: polygon(0 3%, 100% 0, 100% 40%, 0 38%);
+        transform: translate(-5px, 5px);
     }
     20% {
-        clip: rect(78px, 9999px, 98px, 0);
-        transform: skew(0.7deg);
-    }
-    25% {
-        clip: rect(23px, 9999px, 92px, 0);
-        transform: skew(0.3deg);
+        clip-path: polygon(0 0, 100% 2%, 100% 45%, 0 42%);
+        transform: translate(5px, -3px);
     }
     30% {
-        clip: rect(40px, 9999px, 85px, 0);
-        transform: skew(0.5deg);
-    }
-    35% {
-        clip: rect(82px, 9999px, 100px, 0);
-        transform: skew(0.6deg);
+        clip-path: polygon(0 5%, 100% 0, 100% 42%, 0 40%);
+        transform: translate(-3px, 3px);
     }
     40% {
-        clip: rect(54px, 9999px, 96px, 0);
-        transform: skew(0.4deg);
-    }
-    45% {
-        clip: rect(28px, 9999px, 84px, 0);
-        transform: skew(0.5deg);
+        clip-path: polygon(0 0, 100% 3%, 100% 48%, 0 45%);
+        transform: translate(3px, -5px);
     }
     50% {
-        clip: rect(95px, 9999px, 98px, 0);
-        transform: skew(0.3deg);
-    }
-    55% {
-        clip: rect(65px, 9999px, 100px, 0);
-        transform: skew(0.6deg);
-    }
-    60% {
-        clip: rect(96px, 9999px, 90px, 0);
-        transform: skew(0.4deg);
-    }
-    65% {
-        clip: rect(28px, 9999px, 84px, 0);
-        transform: skew(0.5deg);
-    }
-    70% {
-        clip: rect(66px, 9999px, 100px, 0);
-        transform: skew(0.7deg);
-    }
-    75% {
-        clip: rect(78px, 9999px, 98px, 0);
-        transform: skew(0.3deg);
-    }
-    80% {
-        clip: rect(23px, 9999px, 92px, 0);
-        transform: skew(0.5deg);
-    }
-    85% {
-        clip: rect(40px, 9999px, 85px, 0);
-        transform: skew(0.4deg);
-    }
-    90% {
-        clip: rect(82px, 9999px, 100px, 0);
-        transform: skew(0.6deg);
-    }
-    95% {
-        clip: rect(54px, 9999px, 96px, 0);
-        transform: skew(0.5deg);
+        clip-path: polygon(0 2%, 100% 0, 100% 45%, 0 43%);
+        transform: translate(0);
     }
     100% {
-        clip: rect(28px, 9999px, 84px, 0);
-        transform: skew(0.4deg);
+        clip-path: polygon(0 0, 100% 0, 100% 42%, 0 44%);
+        transform: translate(0);
+    }
+}
+
+@keyframes glitchBottom {
+    0% {
+        clip-path: polygon(0 53%, 100% 55%, 100% 100%, 0 100%);
+        transform: translate(0);
+    }
+    15% {
+        clip-path: polygon(0 55%, 100% 53%, 100% 100%, 0 100%);
+        transform: translate(5px, -5px);
+    }
+    30% {
+        clip-path: polygon(0 52%, 100% 56%, 100% 100%, 0 100%);
+        transform: translate(-5px, 5px);
+    }
+    45% {
+        clip-path: polygon(0 56%, 100% 54%, 100% 100%, 0 100%);
+        transform: translate(3px, -3px);
+    }
+    60% {
+        clip-path: polygon(0 54%, 100% 52%, 100% 100%, 0 100%);
+        transform: translate(-3px, 5px);
+    }
+    75% {
+        clip-path: polygon(0 53%, 100% 57%, 100% 100%, 0 100%);
+        transform: translate(0);
+    }
+    100% {
+        clip-path: polygon(0 53%, 100% 55%, 100% 100%, 0 100%);
+        transform: translate(0);
     }
 }
 
 .splash-tagline {
-    font-size: 1.2rem;
-    color: #00ff00;
-    margin-bottom: 40px;
-    font-weight: 400;
-    letter-spacing: 4px;
-    font-family: 'Courier New', monospace;
+    font-size: 1.4rem;
+    color: #ff00ff;
+    margin-bottom: 50px;
+    font-weight: 600;
+    letter-spacing: 6px;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
     text-transform: uppercase;
     animation: 
-        taglineArrival 1s ease-out 0.5s forwards,
-        taglineGlitch 3s infinite 1.5s,
-        taglineExit 0.6s ease-in 2.3s forwards;
-    text-shadow: 0 0 10px #00ff00;
+        taglineEntry 1.2s ease-out 0.6s forwards,
+        chromaShift 4s infinite 1.8s,
+        taglineExit 0.6s ease-in 2.9s forwards;
+    text-shadow: 
+        0 0 10px #ff00ff,
+        0 0 20px #ff00ff,
+        0 0 30px #ff00ff;
     opacity: 0;
-    transform: translateX(-100px);
+    transform: translateX(-150px) rotateY(-90deg);
 }
 
-@keyframes taglineArrival {
+@keyframes taglineEntry {
     0% {
         opacity: 0;
-        transform: translateX(-100px) scale(0.8);
-        filter: blur(10px);
+        transform: translateX(-150px) rotateY(-90deg) scale(0.8);
+        filter: blur(15px);
     }
-    60% {
-        opacity: 0.7;
-        transform: translateX(10px) scale(1.05);
-        filter: blur(2px);
+    70% {
+        opacity: 0.9;
+        transform: translateX(15px) rotateY(0deg) scale(1.05);
+        filter: blur(3px);
     }
     100% {
         opacity: 1;
-        transform: translateX(0) scale(1);
+        transform: translateX(0) rotateY(0deg) scale(1);
         filter: blur(0);
     }
 }
@@ -3282,48 +3664,57 @@ body.tour-lock {
 @keyframes taglineExit {
     0% {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(0) scale(1);
     }
     100% {
         opacity: 0;
-        transform: translateX(100px);
+        transform: translateX(150px) scale(0.8);
     }
 }
 
-@keyframes taglineGlitch {
-    0%, 90%, 100% {
-        transform: translate(0);
+@keyframes chromaShift {
+    0%, 100% {
+        text-shadow: 
+            2px 0 #00ffff,
+            -2px 0 #ff00ff,
+            0 0 20px #ff00ff;
     }
-    92% {
-        transform: translate(-2px, 2px);
+    25% {
+        text-shadow: 
+            -2px 0 #00ffff,
+            2px 0 #ff00ff,
+            0 0 25px #ff00ff;
     }
-    94% {
-        transform: translate(2px, -2px);
+    50% {
+        text-shadow: 
+            0 2px #00ffff,
+            0 -2px #ff00ff,
+            0 0 30px #ff00ff;
     }
-    96% {
-        transform: translate(-2px, -2px);
-    }
-    98% {
-        transform: translate(2px, 2px);
+    75% {
+        text-shadow: 
+            2px 2px #00ffff,
+            -2px -2px #ff00ff,
+            0 0 25px #ff00ff;
     }
 }
 
 .splash-loader-wrapper {
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
     margin: 0 auto;
     animation: 
-        loaderArrival 0.8s ease-out 1s forwards,
-        loaderExit 0.5s ease-in 2.4s forwards;
+        loaderEntry 1s ease-out 1.2s forwards,
+        loaderExit 0.5s ease-in 3s forwards;
     opacity: 0;
-    transform: translateY(30px) scale(0.9);
+    transform: translateY(50px) scale(0.9);
 }
 
-@keyframes loaderArrival {
+@keyframes loaderEntry {
     0% {
         opacity: 0;
-        transform: translateY(50px) scale(0.8);
-        filter: blur(10px);
+        transform: translateY(80px) scale(0.7);
+        filter: blur(15px);
     }
     100% {
         opacity: 1;
@@ -3339,29 +3730,45 @@ body.tour-lock {
     }
     100% {
         opacity: 0;
-        transform: translateY(-30px) scale(0.9);
+        transform: translateY(-50px) scale(0.8);
     }
 }
 
 .splash-loader {
     width: 100%;
-    height: 4px;
-    background: rgba(0, 255, 0, 0.1);
-    border: 1px solid #00ff00;
-    border-radius: 2px;
+    height: 6px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 2px solid #00ffff;
+    border-radius: 3px;
     overflow: hidden;
     position: relative;
-    margin-bottom: 15px;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    margin-bottom: 20px;
+    box-shadow: 
+        0 0 15px rgba(0, 255, 255, 0.5),
+        inset 0 0 10px rgba(0, 255, 255, 0.2);
 }
 
 .loader-progress {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #00ff00 0%, #00ffff 50%, #ff00ff 100%);
-    animation: progressLoad 2s ease-out forwards;
-    box-shadow: 0 0 20px #00ff00;
+    background: linear-gradient(90deg, 
+        #ff00ff 0%, 
+        #00ffff 25%, 
+        #00ff00 50%, 
+        #ffff00 75%, 
+        #ff00ff 100%);
+    animation: 
+        progressLoad 2.5s cubic-bezier(0.65, 0, 0.35, 1) forwards,
+        colorWave 1.5s linear infinite;
+    box-shadow: 
+        0 0 30px #00ffff,
+        0 0 60px #ff00ff;
     position: relative;
+}
+
+@keyframes colorWave {
+    0% { filter: hue-rotate(0deg) brightness(1.2); }
+    100% { filter: hue-rotate(360deg) brightness(1.2); }
 }
 
 .loader-progress::after {
@@ -3374,42 +3781,40 @@ body.tour-lock {
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 255, 255, 0.3),
+        rgba(255, 255, 255, 0.6),
         transparent
     );
-    animation: shimmer 1.5s infinite;
+    animation: shimmer 1s infinite;
 }
 
 @keyframes shimmer {
-    0% {
-        transform: translateX(-100%);
-    }
-    100% {
-        transform: translateX(100%);
-    }
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
 }
 
 @keyframes progressLoad {
-    0% {
-        width: 0%;
-    }
-    100% {
-        width: 100%;
-    }
+    0% { width: 0%; }
+    100% { width: 100%; }
 }
 
 .loader-text {
     text-align: center;
-    color: #00ff00;
-    font-size: 0.9rem;
-    font-weight: 400;
-    font-family: 'Courier New', monospace;
-    text-shadow: 0 0 5px #00ff00;
+    color: #00ffff;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+    text-shadow: 
+        0 0 8px #00ffff,
+        0 0 15px #00ffff;
+    letter-spacing: 3px;
 }
 
 .loading-dots span {
-    animation: dotBlink 1.4s infinite;
+    animation: dotPulse 1.4s infinite;
     opacity: 0;
+    font-size: 1.5em;
+    color: #ff00ff;
+    text-shadow: 0 0 10px #ff00ff;
 }
 
 .loading-dots span:nth-child(1) {
@@ -3424,12 +3829,14 @@ body.tour-lock {
     animation-delay: 0.4s;
 }
 
-@keyframes dotBlink {
+@keyframes dotPulse {
     0%, 80%, 100% {
         opacity: 0;
+        transform: scale(1);
     }
     40% {
         opacity: 1;
+        transform: scale(1.3);
     }
 }
 
@@ -3440,20 +3847,41 @@ body.tour-lock {
     width: 100%;
     height: 100%;
     background-image: 
-        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px),
-        repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px);
-    opacity: 0.3;
+        repeating-linear-gradient(
+            0deg,
+            rgba(0, 255, 255, 0.03),
+            rgba(0, 255, 255, 0.03) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+    opacity: 0.6;
     pointer-events: none;
-    animation: noise 0.2s infinite;
+    animation: scanline 8s linear infinite;
 }
 
-@keyframes noise {
-    0%, 100% {
-        opacity: 0.3;
-    }
-    50% {
-        opacity: 0.5;
-    }
+@keyframes scanline {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100%); }
+}
+
+.glitch-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+        repeating-linear-gradient(
+            90deg,
+            rgba(255, 0, 255, 0.02) 0px,
+            transparent 1px,
+            transparent 2px,
+            rgba(0, 255, 255, 0.02) 3px
+        );
+    animation: staticNoise 0.1s infinite;
+}
+
+@keyframes staticNoise {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
 }
 
 @keyframes fadeOut {
@@ -3467,36 +3895,36 @@ body.tour-lock {
     }
 }
 
-/* Responsive Splash Screen */
+/* Responsive Cyberpunk Splash */
 @media (max-width: 768px) {
     .splash-title {
-        font-size: 3rem;
-        letter-spacing: 4px;
+        font-size: 3.5rem;
+        letter-spacing: 6px;
     }
     
     .splash-tagline {
-        font-size: 1rem;
-        letter-spacing: 2px;
+        font-size: 1.1rem;
+        letter-spacing: 3px;
     }
     
     .splash-loader-wrapper {
-        max-width: 300px;
+        max-width: 350px;
     }
 }
 
 @media (max-width: 480px) {
     .splash-title {
-        font-size: 2rem;
-        letter-spacing: 3px;
+        font-size: 2.2rem;
+        letter-spacing: 4px;
     }
     
     .splash-tagline {
-        font-size: 0.9rem;
-        letter-spacing: 1px;
+        font-size: 0.95rem;
+        letter-spacing: 2px;
     }
     
     .splash-loader-wrapper {
-        max-width: 250px;
+        max-width: 280px;
     }
 }
 
@@ -4012,7 +4440,7 @@ input[type="checkbox"], input[type="radio"] {
     <div class="glitch-noise"></div>
     <div class="splash-content">
         <h1 class="splash-title" data-text="FLIPKARTSNIPER 2.0">FLIPKARTSNIPER 2.0</h1>
-        <p class="splash-tagline">AUTOMATED DEAL HUNTER</p>
+        <p class="splash-tagline">⚡ QUANTUM DEAL HUNTER ⚡</p>
         <div class="splash-loader-wrapper">
             <div class="splash-loader">
                 <div class="loader-progress"></div>
@@ -4377,6 +4805,20 @@ input[type="checkbox"], input[type="radio"] {
                         </span>
                 </label>
                     <label class="toggle-switch">
+                        <input type="checkbox" name="auto_apply_deals" id="autoApplyDealsToggle" checked>
+                        <span class="toggle-labels">
+                            <span class="off"></span>
+                            <span class="on">Auto Apply Cart Deals</span>
+                        </span>
+                        <span class="toggle-track">
+                            <span class="toggle-thumb">
+                                <img class="icon-off" src="/images/eye-close.svg" alt="off">
+                                <img class="icon-on" src="/images/eye-open.svg" alt="on">
+                            </span>
+                            <span class="toggle-ripple"></span>
+                        </span>
+                </label>
+                    <label class="toggle-switch">
                         <input type="checkbox" name="allow_less_qty" id="allowLessQtyToggle" checked>
                         <span class="toggle-labels">
                             <span class="off"></span>
@@ -4514,30 +4956,68 @@ input[type="checkbox"], input[type="radio"] {
 
     <!-- ================= Logs ================= -->
     <div id="logs" class="page hidden">
-        <h1 class="page-title">🧾 Logs</h1>
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                <div style="flex: 1; min-width: 0;">
-                    <h3 style="margin: 0; font-size: 1.3em;">Recent Logs</h3>
-                    <p style="margin: 4px 0 0; color: var(--text-muted); font-size: 0.9em;">Live tail from latest.log + history</p>
-                </div>
-                <div class="logs-mobile-actions">
-                    <select id="logsMobileSelect" style="padding:8px; border-radius:10px; border:1px solid var(--border); background: var(--glass); color: var(--text); font-size: 0.9em;">
-                    </select>
-                    <button type="button" onclick="refreshLogs()" style="width:auto; padding:8px 12px; font-size: 0.9em;">🔄</button>
-                </div>
-                <button type="button" onclick="refreshLogs()" class="logs-desktop-refresh" style="width:auto; padding:10px 16px;">🔄 Refresh</button>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
+            <div>
+                <h1 class="page-title" style="margin-bottom: 5px;">🧾 System Logs</h1>
+                <p style="color: var(--text-muted);">Monitor real-time system activities and historical logs</p>
             </div>
-            <div class="logs-shell">
-                <div class="logs-panel">
-                    <div id="logs-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            <button type="button" onclick="refreshLogs()" class="logs-desktop-refresh" style="width:auto; padding:10px 18px; display: flex; align-items: center; gap: 8px;">
+                <span>🔄</span> Refresh
+            </button>
+        </div>
+
+        <div class="logs-shell">
+            <!-- Sidebar: Log Files -->
+            <div class="logs-panel">
+                <div class="logs-panel-header">
+                    <span style="font-weight: 700; color: var(--blue); font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px;">Log Files</span>
+                    <span id="logs-count" style="font-size: 0.8em; background: var(--highlight); padding: 2px 8px; border-radius: 10px; color: var(--blue);">0</span>
                 </div>
-                <div style="min-width: 0; flex: 1;">
-                    <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px; gap: 8px; flex-wrap: wrap;">
-                        <div id="logs-selected-name" style="font-weight:700; font-size: 1em; word-break: break-word;">latest.log</div>
-                        <a id="logs-download" href="#" class="report-link" style="width:auto; padding:8px 12px; text-decoration:none; white-space: nowrap; flex-shrink: 0;">📥 Download</a>
+                
+                <div class="logs-mobile-actions" style="display: none;">
+                    <select id="logsMobileSelect" style="padding:10px; border-radius:12px; border:1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 0.95em;">
+                    </select>
+                </div>
+
+                <div class="logs-list-container" id="logs-list">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Main: Content Viewer -->
+            <div class="logs-viewer-container">
+                <div class="logs-viewer-header">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f56;"></div>
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e;"></div>
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #27c93f;"></div>
+                        <span id="logs-selected-name" style="margin-left: 8px; font-family: monospace; font-size: 0.9em; color: #8b949e;">latest.log</span>
                     </div>
-                    <pre id="logsViewer" class="logs-viewer"></pre>
+
+                    <div class="logs-viewer-controls">
+                        <div class="logs-search-box">
+                            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none;">🔍</span>
+                            <input type="text" id="logSearch" placeholder="Filter logs..." onkeyup="applyLogsFilter()" style="padding-left: 36px; border-radius: 8px; height: 34px;">
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 8px; background: #161b22; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border);">
+                            <span style="font-size: 0.85em; color: var(--text-muted); font-weight: 600;">Follow</span>
+                            <label class="toggle-track" style="width: 44px; height: 22px; padding: 2px; cursor: pointer;">
+                                <input type="checkbox" id="followLogs" checked style="display: none;">
+                                <span class="toggle-thumb" style="width: 16px; height: 16px; transition: transform 0.2s;"></span>
+                            </label>
+                        </div>
+
+                        <button onclick="copyLogs()" title="Copy to clipboard" style="width: auto; padding: 8px; margin: 0; background: transparent; border: 1px solid var(--border); box-shadow: none;">📋</button>
+                        <a id="logs-download" href="#" class="btn-icon" title="Download Log" style="padding: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--text); display: flex; align-items: center; justify-content: center;">📥</a>
+                    </div>
+                </div>
+                
+                <pre id="logsViewer" class="logs-viewer"></pre>
+                
+                <div id="logsStatus" style="padding: 6px 20px; background: #161b22; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #8b949e;">
+                    <div id="logStatsInfo">Line count: 0</div>
+                    <div id="logLastUpdate">Last updated: Never</div>
                 </div>
             </div>
         </div>
@@ -4761,88 +5241,158 @@ let guidedOverlay, guidedSpot, guidedTip;
 // Stock warning popup
 let stockWarningData = null;
 
-// Logs viewer
+// Logs viewer - simplified version
+function highlightLogs(text) {
+    if (!text) return 'No logs yet.';
+    // Simply escape HTML and return
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+var lastLogContent = '';
+
+
 function renderLogsList(files, selected) {
-    const listEl = document.getElementById('logs-list');
-    const mobSel = document.getElementById('logsMobileSelect');
+    var listEl = document.getElementById('logs-list');
+    var mobSel = document.getElementById('logsMobileSelect');
+    var countEl = document.getElementById('logs-count');
+    
+    if (countEl) countEl.textContent = files.length;
     if (!listEl) return;
+    
     listEl.innerHTML = '';
-    files.forEach((f, idx) => {
-        const row = document.createElement('div');
-        row.style.cssText = `
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: ${f.name === selected ? 'var(--card)' : 'transparent'};
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        `;
-        row.onclick = () => refreshLogs(f.name);
-        const label = document.createElement('div');
-        label.style.fontWeight = '600';
-        label.textContent = `${idx === 0 ? '🔥 ' : ''}${f.name}`;
-        const meta = document.createElement('div');
-        meta.style.fontSize = '0.85em';
-        meta.style.opacity = '0.7';
-        meta.textContent = `${(f.size/1024).toFixed(1)} KB`;
-        row.appendChild(label);
-        row.appendChild(meta);
-        listEl.appendChild(row);
+    files.forEach(function(f, idx) {
+        var item = document.createElement('div');
+        item.className = 'logs-list-item' + (f.name === selected ? ' active' : '');
+        item.onclick = function() {
+            var viewer = document.getElementById('logsViewer');
+            if (viewer) viewer.scrollTop = 0;
+            refreshLogs(f.name);
+        };
+        
+        var isLatest = f.name === 'latest.log' || idx === 0;
+        var icon = isLatest ? '* ' : '';
+        var sizeKB = (f.size/1024).toFixed(1);
+        var timeStr = new Date(f.modified * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        item.innerHTML = '<div class="logs-file-info">' +
+            '<div class="logs-file-name">' + icon + f.name + '</div>' +
+            '<div class="logs-file-meta">' + sizeKB + ' KB - ' + timeStr + '</div>' +
+            '</div>';
+        listEl.appendChild(item);
     });
+    
     if (mobSel) {
         mobSel.innerHTML = '';
-        files.forEach((f, idx) => {
-            const opt = document.createElement('option');
+        files.forEach(function(f, idx) {
+            var opt = document.createElement('option');
             opt.value = f.name;
-            opt.textContent = `${idx === 0 ? '🔥 ' : ''}${f.name}`;
+            var isLatest = f.name === 'latest.log' || idx === 0;
+            opt.textContent = (isLatest ? '* ' : '') + f.name;
             if (f.name === selected) opt.selected = true;
             mobSel.appendChild(opt);
         });
     }
 }
 
+
 function refreshLogs(selectedFile) {
-    const mobSel = document.getElementById('logsMobileSelect');
+    var mobSel = document.getElementById('logsMobileSelect');
     if (!selectedFile && mobSel && mobSel.value) selectedFile = mobSel.value;
-    const qs = selectedFile ? `?file=${encodeURIComponent(selectedFile)}` : '';
+    var qs = selectedFile ? '?file=' + encodeURIComponent(selectedFile) : '';
+    
     safeFetch('/api/logs' + qs)
-        .then(r => r.json())
-        .then(data => {
-            const viewEl = document.getElementById('logsViewer');
-            const nameEl = document.getElementById('logs-selected-name');
-            const dlEl = document.getElementById('logs-download');
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var viewEl = document.getElementById('logsViewer');
+            var nameEl = document.getElementById('logs-selected-name');
+            var dlEl = document.getElementById('logs-download');
+            var statsEl = document.getElementById('logStatsInfo');
+            var updateEl = document.getElementById('logLastUpdate');
+            
             if (data.error) {
                 if (viewEl) {
-                    viewEl.textContent = 'Error: ' + data.error;
-                    viewEl.style.color = 'var(--danger)';
+                    viewEl.innerHTML = '<span class="log-error">Error: ' + escapeHtml(data.error) + '</span>';
                 }
                 return;
             }
-            const files = data.files || [];
-            const selected = data.selected || (files[0] && files[0].name) || 'latest.txt';
+            
+            var files = data.files || [];
+            var selected = data.selected || (files[0] && files[0].name) || 'latest.log';
+            
             renderLogsList(files, selected);
+            
             if (nameEl) nameEl.textContent = selected;
-            if (dlEl) dlEl.href = `/download/log/${encodeURIComponent(selected)}`;
-            if (viewEl) {
-                viewEl.textContent = data.content || 'No logs yet.';
-                viewEl.style.color = 'var(--text)';
+            if (dlEl) dlEl.href = '/download/log/' + encodeURIComponent(selected);
+            
+            if (viewEl && data.content !== lastLogContent) {
+                lastLogContent = data.content;
+                
+                viewEl.innerHTML = highlightLogs(data.content || 'No logs yet.');
                 viewEl.scrollTop = viewEl.scrollHeight;
+                
+                if (statsEl) statsEl.textContent = 'Logs loaded';
+                if (updateEl) updateEl.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+                
+                // Auto-scroll logic
+                var follow = document.getElementById('followLogs');
+                if (follow && follow.checked) {
+                    viewEl.scrollTop = viewEl.scrollHeight;
+                }
+                
+                // Re-apply filter if active
+                applyLogsFilter();
             }
         })
-        .catch(e => {
+        .catch(function(e) {
             if (!isConnectionError(e)) {
                 console.error("Failed to fetch logs:", e);
             }
-            const el = document.getElementById('logsViewer');
+            var el = document.getElementById('logsViewer');
             if (el) {
-                el.textContent = serverOffline ? 'Server is offline. Please start the Flask server.' : 'Failed to load logs.';
-                el.style.color = 'var(--text-muted)';
+                el.innerHTML = '<span class="log-info">' + (serverOffline ? 'Server is offline. Please start the Flask server.' : 'Failed to load logs.') + '</span>';
             }
         });
 }
+
+
+function applyLogsFilter() {
+    var searchEl = document.getElementById('logSearch');
+    if (!searchEl) return;
+    var query = searchEl.value.toLowerCase();
+    var viewer = document.getElementById('logsViewer');
+    if (!viewer) return;
+    var lines = viewer.querySelectorAll('.log-line');
+    var visibleCount = 0;
+    
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var text = line.textContent.toLowerCase();
+        if (text.indexOf(query) >= 0) {
+            line.style.display = 'block';
+            visibleCount++;
+        } else {
+            line.style.display = 'none';
+        }
+    }
+    
+    var statsEl = document.getElementById('logStatsInfo');
+    if (statsEl && query) {
+        statsEl.textContent = 'Showing ' + visibleCount + ' of ' + lines.length + ' lines';
+    }
+}
+
+function copyLogs() {
+    var viewer = document.getElementById('logsViewer');
+    var text = viewer.textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        showToast('success', 'Logs copied to clipboard');
+    }).catch(function(err) {
+        showToast('error', 'Failed to copy logs');
+    });
+}
+
 
 window.onload = ()=> {
     if(localStorage.getItem("theme")==="light"){
@@ -7319,6 +7869,84 @@ def background_run(config):
 
 
 # ============================================================
+# SCREENSHOT SERVING (PUBLIC - No auth required)
+# ============================================================
+
+@app.route("/screenshots/<filename>")
+def serve_screenshot(filename):
+    """Serve screenshots from the screenshots directory"""
+    try:
+        # Get screenshots directory (same as main.py uses)
+        screenshots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "screenshots"))
+        screenshot_path = os.path.join(screenshots_dir, filename)
+        
+        # Security: Ensure file is within screenshots directory (prevent path traversal)
+        if not os.path.abspath(screenshot_path).startswith(os.path.abspath(screenshots_dir)):
+            return "Forbidden", 403
+        
+        # Check if file exists
+        if not os.path.exists(screenshot_path):
+            return "Not Found", 404
+        
+        # Serve the image file
+        return send_file(screenshot_path, mimetype='image/png')
+    except Exception as e:
+        print(f"Error serving screenshot {filename}: {e}")
+        return "Error", 500
+
+
+def get_screenshot_base_url():
+    """
+    Get the base URL for serving screenshots.
+    Supports custom domain via SCREENSHOT_DOMAIN env var.
+    Supports HTTPS via SCREENSHOT_HTTPS=true or if domain starts with https://
+    Examples:
+    - SCREENSHOT_DOMAIN=husan.shop -> https://husan.shop/screenshots (if HTTPS enabled)
+    - SCREENSHOT_DOMAIN=husan.shop:8080 -> https://husan.shop:8080/screenshots
+    - SCREENSHOT_DOMAIN=https://husan.shop -> https://husan.shop/screenshots
+    - No env var -> http://localhost:5000/screenshots
+    """
+    custom_domain = os.environ.get("SCREENSHOT_DOMAIN", "").strip()
+    use_https = os.environ.get("SCREENSHOT_HTTPS", "false").lower() == "true"
+    
+    if custom_domain:
+        # Check if domain already includes protocol
+        if custom_domain.startswith("http://") or custom_domain.startswith("https://"):
+            # Full URL provided, extract domain and port
+            from urllib.parse import urlparse
+            parsed = urlparse(custom_domain)
+            domain = parsed.netloc or parsed.path
+            if not domain:
+                domain = custom_domain.replace("http://", "").replace("https://", "")
+            protocol = "https" if custom_domain.startswith("https://") else "http"
+            # If no port in domain, add default port
+            if ":" not in domain:
+                port = os.environ.get("FLASK_PORT", "5000")
+                domain_with_port = f"{domain}:{port}" if port != "443" and protocol == "https" else domain
+            else:
+                domain_with_port = domain
+            return f"{protocol}://{domain_with_port}/screenshots"
+        else:
+            # Domain only, determine protocol
+            protocol = "https" if use_https else "http"
+            # If domain includes port, use it; otherwise default to 5000 (or 443 for HTTPS)
+            if ":" in custom_domain:
+                domain_with_port = custom_domain
+            else:
+                if use_https:
+                    # HTTPS typically uses port 443 (no need to specify)
+                    domain_with_port = custom_domain
+                else:
+                    port = os.environ.get("FLASK_PORT", "5000")
+                    domain_with_port = f"{custom_domain}:{port}"
+            return f"{protocol}://{domain_with_port}/screenshots"
+    else:
+        # Default to localhost
+        port = os.environ.get("FLASK_PORT", "5000")
+        return f"http://localhost:{port}/screenshots"
+
+
+# ============================================================
 # ROUTES (PROTECTED)
 # ============================================================
 
@@ -7427,6 +8055,7 @@ def start_job():
         "remove_mail_on_success": request.form.get("remove_mail_on_success") == "on",
         "deal_keyword": request.form.get("deal_keyword"),
         "use_coupon": use_coupon_bool,
+        "auto_apply_deals": request.form.get("auto_apply_deals") == "on",  # New: Auto apply deals toggle
         "products_dict": {
             u: int(q)
             for u, q in zip(
@@ -8120,11 +8749,17 @@ if __name__ == "__main__":
             
     # Get local IP address for network access (function already defined above)
     local_ip = get_local_ip()
+    port = int(os.environ.get("FLASK_PORT", "5000"))
+    custom_domain = os.environ.get("SCREENSHOT_DOMAIN", "").strip()
+    
     print("🚀 FlipkartSniper 2.0 started!")
-    print(f"   Local:   http://localhost:5000")
-    print(f"   Network: http://{local_ip}:5000")
+    print(f"   Local:   http://localhost:{port}")
+    print(f"   Network: http://{local_ip}:{port}")
+    if custom_domain:
+        print(f"   Domain:  http://{custom_domain if ':' in custom_domain else f'{custom_domain}:{port}'}")
     print(f"   Mobile:  Access from your phone using the Network URL above")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print(f"   Screenshots: {get_screenshot_base_url()}")
+    app.run(host='0.0.0.0', port=port, debug=True)
 
 
 

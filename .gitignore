@@ -1,0 +1,10 @@
+files/
+download/
+downloads/
+uploads/
+screenshots/
+logs/
+imap_config.json
+__pycache__/
+*.log
+*.pyc

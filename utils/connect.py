@@ -379,24 +379,36 @@ def save_used_lines(used_list, src, dest):
 def restore_coupon(coupon):
     """
     Put coupon back into coupon.txt if it was temporarily removed.
-    Optimized to append directly if coupon not present (avoids reading entire file).
+    Returns True if coupon was restored, False otherwise.
     """
     if not coupon:
-        return
-    with resource_lock:
-        # Quick check if coupon exists (stop at first match for speed)
-        coupon_exists = False
-        if os.path.exists(COUPON_FILE):
-            with open(COUPON_FILE, "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.strip() == coupon:
-                        coupon_exists = True
-                        break
-        
-        # Only append if not exists (much faster than read-all, modify, write-all)
-        if not coupon_exists:
-            with open(COUPON_FILE, "a", encoding="utf-8") as f:
-                f.write(coupon + "\n")
+        print(f"[COUPON RESTORE] ⚠️ Cannot restore empty/None coupon")
+        return False
+    
+    try:
+        with resource_lock:
+            # Quick check if coupon exists (stop at first match for speed)
+            coupon_exists = False
+            if os.path.exists(COUPON_FILE):
+                with open(COUPON_FILE, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if line.strip() == coupon:
+                            coupon_exists = True
+                            print(f"[COUPON RESTORE] ℹ️ Coupon '{coupon}' already exists in coupon.txt - skipping restore")
+                            break
+            
+            # Only append if not exists (much faster than read-all, modify, write-all)
+            if not coupon_exists:
+                with open(COUPON_FILE, "a", encoding="utf-8") as f:
+                    f.write(coupon + "\\n")
+                print(f"[COUPON RESTORE] ✅ Successfully restored coupon '{coupon}' to coupon.txt")
+                return True
+            return True  # Already exists, so technically "restored"
+    except Exception as e:
+        print(f"[COUPON RESTORE] ❌ ERROR: Failed to restore coupon '{coupon}': {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 # ==========================================================
@@ -435,6 +447,7 @@ class ConnectRunner:
         address1=None,
         address2=None,
         use_coupon=True,
+        auto_apply_deals=True,  # New parameter: auto-apply deals toggle
         headless=None,  # None = default (Headless on Linux, Configurable on Windows)
     ):
         self.max_parallel = max_parallel
@@ -453,6 +466,9 @@ class ConnectRunner:
 
         # global toggle: whether to apply coupons in this batch
         self.use_coupon = True if str(use_coupon).lower() == "true" else False
+        
+        # global toggle: whether to auto-apply deals in cart
+        self.auto_apply_deals = True if str(auto_apply_deals).lower() == "true" else False
         
         # Headless logic optimization for VPS
         if headless is None:
@@ -535,6 +551,7 @@ class ConnectRunner:
                 coupon=coupon,
                 max_price=self.max_price,
                 deal_keyword=self.deal_keyword,
+                auto_apply_deals=self.auto_apply_deals,
                 session_id=session_id,
                 headless=self.headless,
                 allow_less_qty=self.allow_less_qty,
@@ -591,9 +608,8 @@ class ConnectRunner:
                 # 4) Add products
                 sniper.step_add_all_products()
 
-                # 5) Apply deal booster (optional)
-                if sniper.deal_keyword:
-                    sniper.step_apply_cart_deals(sniper.deal_keyword)
+                # 5) Apply deal booster (ALWAYS - auto-clicks all Add/Apply buttons if no keyword)
+                sniper.step_apply_cart_deals(sniper.deal_keyword)
 
                 # 6) Apply coupon (controlled by use_coupon flag) - JIT pop
                 if use_coupon:
@@ -676,10 +692,12 @@ class ConnectRunner:
                 print(f"[WORKER #{index+1}] Quantity too low - stopping all workers")
                 
                 # Write failure to CSV before stopping
-                coupon_error_codes = {"COUPON_MAX_USAGE_LIMIT", "INVALID_COUPON", "COUPON_APPLY_ERROR"}
+                coupon_error_codes = {"COUPON_MAX_USAGE_LIMIT", "INVALID_COUPON", "COUPON_EXPIRED", "COUPON_APPLY_ERROR"}
                 # QTY_TOO_LOW is not a coupon error, so restore coupon
                 if error in CRASH_TYPES or error not in coupon_error_codes:
-                    restore_coupon(popped_coupon or coupon)
+                    restored = restore_coupon(popped_coupon or coupon)
+                    if not restored:
+                        print(f"[WORKER #{index+1}] ⚠️ Failed to restore coupon after QTY_TOO_LOW")
                 
                 # Log coupon usage result to used_coupon.csv (but not to failed_coupon.csv since it's not a coupon error)
                 if popped_coupon:
@@ -714,18 +732,25 @@ class ConnectRunner:
                 print(f"[WORKER #{index+1}] QTY_TOO_LOW detected - worker stopping, parent should stop all workers")
                 return
 
-            coupon_error_codes = {"COUPON_MAX_USAGE_LIMIT", "INVALID_COUPON", "COUPON_APPLY_ERROR"}
+            coupon_error_codes = {"COUPON_MAX_USAGE_LIMIT", "INVALID_COUPON", "COUPON_EXPIRED", "COUPON_APPLY_ERROR"}
             is_coupon_error = error in coupon_error_codes
 
-            # Restore coupon unless the error is coupon-specific
-            # If it's a coupon error, DON'T restore (coupon stays removed from coupon.txt)
-            # If it's NOT a coupon error, restore the coupon back to coupon.txt
-            if error in CRASH_TYPES or error not in coupon_error_codes:
-                restore_coupon(popped_coupon or coupon)
-                print(f"[COUPON] ✅ Restored coupon '{popped_coupon or coupon}' to coupon.txt (error: {error} is not a coupon error)")
+            # Errors for which we NEVER restore the coupon (state unknown / risky to reuse)
+            # Include NOT_FOUND to cover cases where result mapping loses the original coupon error
+            no_restore_errors = {"DRIVER_UNRESPONSIVE", "NOT_FOUND"}
+
+            # Restore coupon rules:
+            # - If it's a coupon error → DON'T restore (coupon stays removed)
+            # - If it's in no_restore_errors (e.g. DRIVER_UNRESPONSIVE) → DON'T restore
+            # - Otherwise (including CRASH_TYPES) → restore coupon so it can be retried
+            if is_coupon_error or error in no_restore_errors:
+                print(f"[COUPON] ❌ Coupon '{popped_coupon or coupon}' NOT restored (error: {error}) - coupon remains removed from coupon.txt")
             else:
-                # Coupon error - coupon stays removed from coupon.txt (not restored)
-                print(f"[COUPON] ❌ Coupon '{popped_coupon or coupon}' NOT restored (coupon error: {error}) - coupon remains removed from coupon.txt")
+                restored = restore_coupon(popped_coupon or coupon)
+                if restored:
+                    print(f"[COUPON] ✅ Restored coupon '{popped_coupon or coupon}' to coupon.txt (error: {error} is not a coupon/no-restore error)")
+                else:
+                    print(f"[COUPON] ⚠️ FAILED to restore coupon '{popped_coupon or coupon}' to coupon.txt (error: {error})")
 
             # Log coupon usage result to used_coupon.csv
             if popped_coupon:
@@ -764,7 +789,9 @@ class ConnectRunner:
             err = "CRASH"
             
             screenshot_url = getattr(sniper, 'screenshot_url', 'NONE') if sniper else 'NONE'
-            restore_coupon(popped_coupon or coupon)
+            restored = restore_coupon(popped_coupon or coupon)
+            if not restored:
+                print(f"❌ Failed to restore coupon after CRASH")
 
             # Log coupon usage result to used_coupon.csv (CRASH is not a coupon error, so don't log to failed_coupon.csv)
             if popped_coupon:
