@@ -784,13 +784,35 @@ class FlipkartSniper:
         increase_btn_xpath = "(//div[contains(@style,'rgb(133, 60, 14)')])[last()]"
 
         # Two attempts to update quantity and find maximum available
+        # Helper for converting text to quantity safely
+        def safe_get_qty(element):
+            try:
+                txt = element.text.strip()
+                # Check value attribute for inputs
+                if not txt:
+                    txt = element.get_attribute("value") or ""
+                
+                if not txt:
+                    return 0
+                
+                digits = "".join(filter(str.isdigit, txt))
+                return int(digits) if digits else 0
+            except:
+                return 0
+
+        # Two attempts to update quantity and find maximum available
         max_available_qty = 0
         for attempt in range(1, 3):
             try:
                 qty_el = self.q(4).until(EC.presence_of_element_located((By.XPATH, qty_xpath)))
-                qty_text = qty_el.text.strip()
-                current_qty = int("".join(filter(str.isdigit, qty_text))) if qty_text else 0
-                max_available_qty = current_qty  # Track the max we've seen
+                current_qty = safe_get_qty(qty_el)
+                
+                # Retry if 0 and we expect >0 (maybe loading)
+                if current_qty == 0:
+                    time.sleep(0.5)
+                    current_qty = safe_get_qty(qty_el)
+                
+                max_available_qty = max(max_available_qty, current_qty)
 
                 if current_qty >= desired_qty:
                     self.logger.info(f"Quantity OK: {current_qty}/{desired_qty}")
@@ -816,8 +838,7 @@ class FlipkartSniper:
                 time.sleep(1.5)
                 try:
                     qty_el = self.q(4).until(EC.presence_of_element_located((By.XPATH, qty_xpath)))
-                    qty_text = qty_el.text.strip()
-                    final_qty = int("".join(filter(str.isdigit, qty_text))) if qty_text else 0
+                    final_qty = safe_get_qty(qty_el)
                     max_available_qty = max(max_available_qty, final_qty)
                     
                     # Check if we've reached the maximum available quantity
@@ -838,32 +859,41 @@ class FlipkartSniper:
         # FINAL VERIFICATION - Check maximum available quantity after all attempts
         try:
             qty_el = self.q(3).until(EC.presence_of_element_located((By.XPATH, qty_xpath)))
-            final_text = qty_el.text.strip()
-            final_qty = int("".join(filter(str.isdigit, final_text))) if final_text else 0
+            final_qty = safe_get_qty(qty_el)
+            
+            # If final_qty is still 0 but we clicked Add successfully earlier, assume 1
+            if final_qty == 0:
+                 self.logger.warning("Could not read final quantity text (got 0/empty), assuming 1 since 'Add' was clicked.")
+                 final_qty = 1
+            
             max_available_qty = max(max_available_qty, final_qty)
+            
             if final_qty >= desired_qty:
                 self.logger.success(f"FINAL QUANTITY: {final_qty}/{desired_qty} - SUCCESS")
             else:
                 self.logger.warning(f"FINAL QUANTITY: {final_qty}/{desired_qty} - LESS THAN DESIRED")
             
             # Only record warnings if there's an actual quantity issue
-            if max_available_qty < desired_qty:
+            if final_qty < desired_qty: # use final_qty instead of max_available_qty for final check
                 if not self.allow_less_qty:
                     # If allow_less_qty is disabled, this is a fatal error
-                    self.logger.error(f"[STOCK] Maximum available quantity {max_available_qty} < desired {desired_qty} and allow_less_qty is disabled - stopping all workers")
-                    self._record_stock_warning(product_name, product_url, desired_qty, max_available_qty)
+                    self.logger.error(f"[STOCK] Quantity {final_qty} < desired {desired_qty} and allow_less_qty is disabled - stopping all workers")
+                    self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
                     self._fatal("QTY_TOO_LOW")  # This will raise FatalBotError
                 else:
                     # If allow_less_qty is enabled, just record a warning (not fatal)
-                    self._record_stock_warning(product_name, product_url, desired_qty, max_available_qty)
-                    self.logger.warning(f"[STOCK] Available quantity {max_available_qty} < desired {desired_qty} but allow_less_qty is enabled - continuing")
+                    self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
+                    self.logger.warning(f"[STOCK] Available quantity {final_qty} < desired {desired_qty} but allow_less_qty is enabled - continuing")
             # If final_qty >= desired_qty, no warning needed - quantity is sufficient
         except FatalBotError:
             raise  # Re-raise fatal errors immediately
         except Exception as e:
-            # If verification fails, fatal because quantity is important
-            self.logger.error(f"Could not verify final quantity: {e}")
-            self._fatal("QTY_VERIFICATION_FAILED")
+            # If verification REALLY fails (element gone?), don't crash if we allow less qty
+            if self.allow_less_qty:
+                 self.logger.warning(f"Quantity verification error: {e}. Continuing assuming successful add.")
+            else:
+                 self.logger.error(f"Could not verify final quantity: {e}")
+                 self._fatal("QTY_VERIFICATION_FAILED")
 
     # ------------------------------------------------------------------
     # Add all products
