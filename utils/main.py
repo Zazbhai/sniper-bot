@@ -697,7 +697,6 @@ class FlipkartSniper:
 
     def step_add_single_product(self, product_url, desired_qty):
         self.logger.info(f"Adding product: {product_url} | Desired Qty: {desired_qty}")
-        
         # Retry navigation to handle renderer timeouts
         for attempt in range(3):
             try:
@@ -710,384 +709,268 @@ class FlipkartSniper:
                     self._fatal("PAGE_LOAD_FAILED")
                 time.sleep(3)
         
-        # Give page time to load and React components to settle
+        # Give page time to load and React components to settle (Grocery is slow)
         time.sleep(3)
 
         # Get product name with robust fallbacks
-        product_name = self._extract_product_name()
-        
-        # Dismiss any overlays
-        self._dismiss_overlays()
-        
-        # Find and click Add button
-        if not self._click_add_button():
-            self._handle_add_button_failure()
-        
-        # Rest of your quantity logic...
+        product_name = "Unknown Product"
+        try:
+            # wait briefly for any title element
+            name_selector = "span.B_NuCI, h1.yhB1nd, h1, div.css-1rynq56.r-8akbws.r-krxsd3"
+            try:
+                product_name_element = self.driver.find_element(By.CSS_SELECTOR, name_selector)
+                product_name = product_name_element.text.strip()
+            except:
+                # Fallback to the complex React class
+                product_name_element = self.driver.find_element(By.CSS_SELECTOR, "div.css-1rynq56.r-8akbws.r-krxsd3.r-dnmrzs.r-1udh08x.r-1udbk01")
+                product_name = product_name_element.text.strip()
+            
+            self.logger.info(f"Product Name: {product_name}")
+            # Give page one more second to settle before clicking critical buttons
+            time.sleep(1)
+        except Exception as e:
+            try:
+                 h1s = self.driver.find_elements(By.TAG_NAME, "h1")
+                 for h in h1s:
+                     if h.is_displayed() and len(h.text.strip()) > 5:
+                         product_name = h.text.strip()
+                         self.logger.info(f"Product Name (fallback): {product_name}")
+                         break
+            except:
+                self.logger.warning(f"Could not extract product name: {e}")
+
+        # Try to dismiss any potential location picker / overlay 
+        # try:
+        #     # Clicking body helps clear some focus-based overlays
+        #     self.driver.find_element(By.TAG_NAME, "body").click()
+        #     time.sleep(0.5)
+        #     # Find and click cross/close buttons
+        #     close_buttons = self.driver.find_elements(By.XPATH, "//div[contains(@class,'close')] | //img[contains(@src,'cross')] | //div[text()='✕']")
+        #     for cb in close_buttons:
+        #         if cb.is_displayed():
+        #             cb.click()
+        #             time.sleep(0.5)
+        # except:
+        #     pass
+
+        # Click Add - comprehensive Grocery selectors
+        add_button = None
+        add_xpaths = [
+            "//div[text()='Add']",
+            "//div[text()='ADD']",
+            "//div[normalize-space(text())='Add']",
+            "//div[normalize-space(text())='ADD']",
+            "//div[contains(text(), 'Add') and contains(@class, 'r-1777fci')]",
+            "//div[contains(text(), 'ADD') and contains(@class, 'r-1777fci')]",
+            "//div[normalize-space(text())='Add to cart' or normalize-space(text())='ADD TO CART']",
+            "//div[contains(@class, 'r-1m93j0t')]//div[text()='Add' or text()='ADD']",
+        ]
+
+        self.logger.info("Looking for Add button...")
+        time.sleep(1.0) # Brief pause before search
+        for xpath in add_xpaths:
+            try:
+                btns = self.driver.find_elements(By.XPATH, xpath)
+                for btn in btns:
+                    if btn.is_displayed():
+                        add_button = btn
+                        break
+                if add_button: break
+            except: continue
+
+        # Recovery scroll attempt
+        if not add_button:
+            self.logger.info("Add button not found, performing recovery scroll...")
+            for scroll_amt in [400, 800]:
+                self.driver.execute_script(f"window.scrollBy(0, {scroll_amt});")
+                time.sleep(1)
+                for xpath in add_xpaths:
+                    try:
+                        btns = self.driver.find_elements(By.XPATH, xpath)
+                        for btn in btns:
+                            if btn.is_displayed():
+                                add_button = btn
+                                break
+                        if add_button: break
+                    except: continue
+                if add_button: break
+
+        try:
+            if not add_button:
+                raise NoSuchElementException("Add button not found")
+            
+            # Explicit scroll + pause before clicking (Critical for VPS)
+            try:
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", add_button)
+                time.sleep(1.0)
+            except: pass
+                
+            # Robust click mechanism (Standard -> JS -> Retry)
+            clicked = False
+            for i in range(3):
+                try:
+                    add_button.click()
+                    clicked = True
+                    self.logger.info("Standard click successful")
+                    break
+                except Exception as e:
+                    self.logger.warning(f"Standard click failed: {e}, trying JS click...")
+                    try:
+                        self.driver.execute_script("arguments[0].click();", add_button)
+                        clicked = True
+                        self.logger.info("JS click successful")
+                        break
+                    except Exception as js_e:
+                        self.logger.warning(f"JS click failed: {js_e}")
+                        time.sleep(1)
+            
+            if not clicked:
+                self.logger.error("All click attempts failed for Add button")
+            
+            time.sleep(2.5) # Increased wait for 'Add' -> 'Qty' transition
+            self.logger.info("Add button interaction completed")
+        except Exception:
+            # Product "Add" button not present → treat as OOS
+            self.logger.error("Add button not found - perform OOS debug scroll")
+            
+            # Scroll down to capture more context in screenshot
+            try:
+                self.driver.execute_script("window.scrollTo(0, 1000);") 
+                time.sleep(0.5)
+                # Physical keys
+                try:
+                    body = self.driver.find_element(By.TAG_NAME, "body")
+                    body.click()
+                    for _ in range(5):
+                        body.send_keys(Keys.PAGE_DOWN)
+                        time.sleep(0.2)
+                except: pass
+            except Exception: pass
+                
+            # Local screenshot
+            try:
+                ts = int(time.time())
+                path = f"screenshots/PRODUCT_OOS_SCROLL_{ts}.png"
+                self.driver.save_screenshot(path)
+                self.logger.info(f"OOS Context Screenshot saved at: {path}")
+            except: pass
+
+            self._fatal("PRODUCT_OUT_OF_STOCK")
+
         qty_xpath = "//div[contains(@class,'r-1cenzwm') and contains(@class,'r-1b43r93')]"
         increase_btn_xpath = "(//div[contains(@style,'rgb(133, 60, 14)')])[last()]"
 
-
-    def _extract_product_name(self):
-        """Extract product name with multiple fallback strategies"""
-        product_name = "Unknown Product"
-        
-        name_strategies = [
-            ("CSS selector", By.CSS_SELECTOR, "span.B_NuCI, h1.yhB1nd, h1, div.css-1rynq56.r-8akbws.r-krxsd3"),
-            ("Complex React class", By.CSS_SELECTOR, "div.css-1rynq56.r-8akbws.r-krxsd3.r-dnmrzs.r-1udh08x.r-1udbk01"),
-            ("H1 tag", By.TAG_NAME, "h1"),
-            ("Product title class", By.CSS_SELECTOR, "[class*='product'][class*='title'], [class*='ProductTitle']"),
-        ]
-        
-        for strategy_name, by_type, selector in name_strategies:
+        # Two attempts to update quantity and find maximum available
+        # Helper for converting text to quantity safely
+        def safe_get_qty(element):
             try:
-                if by_type == By.TAG_NAME:
-                    elements = self.driver.find_elements(by_type, selector)
-                    for el in elements:
-                        if el.is_displayed() and len(el.text.strip()) > 5:
-                            product_name = el.text.strip()
-                            self.logger.info(f"Product Name ({strategy_name}): {product_name}")
-                            time.sleep(1)
-                            return product_name
-                else:
-                    element = self.driver.find_element(by_type, selector)
-                    if element.is_displayed():
-                        product_name = element.text.strip()
-                        self.logger.info(f"Product Name ({strategy_name}): {product_name}")
-                        time.sleep(1)
-                        return product_name
-            except Exception:
-                continue
-        
-        self.logger.warning(f"Could not extract product name, using: {product_name}")
-        return product_name
-
-
-    def _dismiss_overlays(self):
-        """Dismiss any popups or overlays that might interfere with clicking"""
-        try:
-            # Click body to clear focus
-            self.driver.find_element(By.TAG_NAME, "body").click()
-            time.sleep(0.3)
-            
-            # Find and close any overlays
-            close_patterns = [
-                "//div[contains(@class,'close')]",
-                "//img[contains(@src,'cross')]",
-                "//div[text()='✕']",
-                "//button[contains(@aria-label, 'close')]",
-                "//*[@role='button' and contains(@aria-label, 'Close')]",
-                "//div[contains(@class, 'modal')]//button",
-            ]
-            
-            for xpath in close_patterns:
-                try:
-                    elements = self.driver.find_elements(By.XPATH, xpath)
-                    for el in elements:
-                        if el.is_displayed():
-                            try:
-                                el.click()
-                                time.sleep(0.3)
-                            except:
-                                pass
-                except:
-                    continue
-        except Exception as e:
-            self.logger.debug(f"Overlay dismissal skipped: {e}")
-
-
-    def _click_add_button(self):
-        """
-        Find and click the Add button using multiple strategies.
-        Returns True if successful, False otherwise.
-        """
-        self.logger.info("Looking for Add button...")
-        time.sleep(1.0)
-        
-        # Strategy 1: Text-based search
-        if self._try_click_add_by_text():
-            return True
-        
-        # Strategy 2: Class-based search
-        if self._try_click_add_by_class():
-            return True
-        
-        # Strategy 3: Scroll and retry
-        if self._try_click_add_with_scroll():
-            return True
-        
-        # Strategy 4: Parent container search
-        if self._try_click_add_by_container():
-            return True
-        
-        return False
-
-
-    def _try_click_add_by_text(self):
-        """Strategy 1: Find Add button by text content"""
-        text_patterns = [
-            "Add",
-            "ADD",
-            "Add to cart",
-            "ADD TO CART",
-            "Add to Cart",
-        ]
-        
-        for text in text_patterns:
-            xpaths = [
-                f"//div[text()='{text}']",
-                f"//div[normalize-space(text())='{text}']",
-                f"//div[contains(text(), '{text}')]",
-                f"//button[text()='{text}']",
-                f"//button[contains(text(), '{text}')]",
-                f"//*[@role='button' and contains(text(), '{text}')]",
-            ]
-            
-            for xpath in xpaths:
-                if self._find_and_click_add(xpath, f"text '{text}'"):
-                    return True
-        
-        return False
-
-
-    def _try_click_add_by_class(self):
-        """Strategy 2: Find Add button by class patterns"""
-        class_patterns = [
-            # Based on your provided HTML structure
-            "//div[contains(@class, 'css-175oi2r') and contains(@class, 'r-1awozwy')]//div[text()='Add']",
-            "//div[contains(@class, 'r-1777fci')]//div[contains(text(), 'Add')]",
-            "//div[contains(@class, 'r-1cenzwm')]//div[contains(text(), 'Add')]",
-            "//div[contains(@class, 'r-1m93j0t')]//div[text()='Add' or text()='ADD']",
-            "//*[contains(@class, 'add-to-cart')]",
-            "//*[contains(@class, 'addToCart')]",
-            "//*[contains(@class, 'btn-add')]",
-        ]
-        
-        for xpath in class_patterns:
-            if self._find_and_click_add(xpath, "class pattern"):
-                return True
-        
-        return False
-
-
-    def _try_click_add_with_scroll(self):
-        """Strategy 3: Scroll down and retry finding Add button"""
-        self.logger.info("Add button not found, performing recovery scroll...")
-        
-        scroll_amounts = [300, 600, 900, -300]  # Include scroll up as fallback
-        
-        for scroll_amt in scroll_amounts:
-            try:
-                self.driver.execute_script(f"window.scrollBy(0, {scroll_amt});")
-                time.sleep(1)
+                txt = element.text.strip()
+                # Check value attribute for inputs
+                if not txt:
+                    txt = element.get_attribute("value") or ""
                 
-                # Try text-based search after scroll
-                if self._try_click_add_by_text():
-                    return True
+                if not txt:
+                    return 0
                 
-                # Try class-based search after scroll
-                if self._try_click_add_by_class():
-                    return True
-                    
-            except Exception as e:
-                self.logger.debug(f"Scroll attempt failed: {e}")
-                continue
-        
-        return False
-
-
-    def _try_click_add_by_container(self):
-        """Strategy 4: Find Add button container and click child elements"""
-        container_patterns = [
-            "//div[contains(@class, 'r-yuc5th')]",  # From your HTML
-            "//div[contains(@class, 'r-z2wwpe')]",
-            "//*[contains(@class, 'product-add')]",
-            "//*[contains(@class, 'add-button-container')]",
-        ]
-        
-        for container_xpath in container_patterns:
-            try:
-                containers = self.driver.find_elements(By.XPATH, container_xpath)
-                for container in containers:
-                    if not container.is_displayed():
-                        continue
-                    
-                    # Look for Add text within container
-                    try:
-                        add_elements = container.find_elements(By.XPATH, ".//*[contains(text(), 'Add')]")
-                        for add_el in add_elements:
-                            if add_el.is_displayed():
-                                clickable = self._find_clickable_parent(add_el, container)
-                                if self._safe_click_element(clickable, "container search"):
-                                    return True
-                    except Exception:
-                        continue
-            except Exception:
-                continue
-        
-        return False
-
-
-    def _find_and_click_add(self, xpath, strategy_name):
-        """Helper to find Add button and attempt click"""
-        try:
-            elements = self.driver.find_elements(By.XPATH, xpath)
-            
-            for element in elements:
-                if not element.is_displayed():
-                    continue
-                
-                # Find the clickable element (might be parent)
-                clickable = self._find_clickable_parent(element)
-                
-                if self._safe_click_element(clickable, strategy_name):
-                    return True
-                    
-        except Exception as e:
-            self.logger.debug(f"Strategy '{strategy_name}' failed: {e}")
-        
-        return False
-
-
-    def _find_clickable_parent(self, element, max_parent=None):
-        """
-        Find the actual clickable element by traversing up the DOM tree.
-        Stops at max_parent if provided.
-        """
-        current = element
-        
-        for _ in range(3):  # Check up to 3 levels up
-            try:
-                # Check if current element is clickable
-                tag = current.tag_name.lower()
-                role = current.get_attribute('role')
-                classes = current.get_attribute('class') or ''
-                
-                # Button-like elements
-                if tag in ['button', 'a'] or role == 'button':
-                    return current
-                
-                # Divs with button-like classes
-                if 'button' in classes.lower() or 'clickable' in classes.lower():
-                    return current
-                
-                # Divs with click handlers (check for cursor pointer)
-                cursor = self.driver.execute_script(
-                    "return window.getComputedStyle(arguments[0]).cursor;", 
-                    current
-                )
-                if cursor == 'pointer':
-                    return current
-                
-                # Move to parent
-                if max_parent and current == max_parent:
-                    break
-                
-                parent = current.find_element(By.XPATH, "..")
-                if parent == current:  # Reached document root
-                    break
-                
-                current = parent
-                
-            except Exception:
-                break
-        
-        # Return original element if no clickable parent found
-        return element
-
-
-    def _safe_click_element(self, element, strategy_name):
-        """Try multiple click methods on the element"""
-        
-        # Scroll element into view first
-        try:
-            self.driver.execute_script(
-                "arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", 
-                element
-            )
-            time.sleep(0.5)
-        except Exception:
-            pass
-        
-        # Method 1: safe_click (your existing method)
-        try:
-            self.safe_click(element)
-            time.sleep(2.5)
-            self.logger.info(f"Add button clicked successfully using {strategy_name} (safe_click)")
-            return True
-        except Exception as e:
-            self.logger.debug(f"safe_click failed: {e}")
-        
-        # Method 2: JavaScript click
-        try:
-            self.driver.execute_script("arguments[0].click();", element)
-            time.sleep(2.5)
-            self.logger.info(f"Add button clicked successfully using {strategy_name} (JS click)")
-            return True
-        except Exception as e:
-            self.logger.debug(f"JS click failed: {e}")
-        
-        # Method 3: Action chains
-        try:
-            from selenium.webdriver.common.action_chains import ActionChains
-            ActionChains(self.driver).move_to_element(element).click().perform()
-            time.sleep(2.5)
-            self.logger.info(f"Add button clicked successfully using {strategy_name} (Action chains)")
-            return True
-        except Exception as e:
-            self.logger.debug(f"Action chains failed: {e}")
-        
-        # Method 4: Force click via JavaScript (removes any blocking elements)
-        try:
-            self.driver.execute_script("""
-                var element = arguments[0];
-                var event = new MouseEvent('click', {
-                    view: window,
-                    bubbles: true,
-                    cancelable: true
-                });
-                element.dispatchEvent(event);
-            """, element)
-            time.sleep(2.5)
-            self.logger.info(f"Add button clicked successfully using {strategy_name} (Force JS)")
-            return True
-        except Exception as e:
-            self.logger.debug(f"Force JS click failed: {e}")
-        
-        return False
-
-
-    def _handle_add_button_failure(self):
-        """Handle case when Add button cannot be clicked - likely OOS"""
-        self.logger.error("Add button not found - perform OOS debug scroll")
-        
-        # Scroll down to capture more context
-        try:
-            self.driver.execute_script("window.scrollTo(0, 1000);")
-            time.sleep(0.5)
-            
-            # Use keyboard to scroll
-            try:
-                body = self.driver.find_element(By.TAG_NAME, "body")
-                body.click()
-                for _ in range(5):
-                    body.send_keys(Keys.PAGE_DOWN)
-                    time.sleep(0.2)
+                digits = "".join(filter(str.isdigit, txt))
+                return int(digits) if digits else 0
             except:
-                pass
-        except Exception:
-            pass
-        
-        # Save screenshot for debugging
+                return 0
+
+        # Two attempts to update quantity and find maximum available
+        max_available_qty = 0
+        for attempt in range(1, 3):
+            try:
+                qty_el = self.q(4).until(EC.presence_of_element_located((By.XPATH, qty_xpath)))
+                current_qty = safe_get_qty(qty_el)
+                
+                # Retry if 0 and we expect >0 (maybe loading)
+                if current_qty == 0:
+                    time.sleep(0.5)
+                    current_qty = safe_get_qty(qty_el)
+                
+                max_available_qty = max(max_available_qty, current_qty)
+
+                if current_qty >= desired_qty:
+                    self.logger.info(f"Quantity OK: {current_qty}/{desired_qty}")
+                    break
+
+                missing = desired_qty - current_qty
+                self.logger.info(f"Attempt {attempt}/2 → Current: {current_qty}, Missing: {missing}")
+
+                # Try to increase quantity
+                increase_count = 0
+                for _ in range(missing):
+                    try:
+                        btn = self.q(2).until(EC.element_to_be_clickable((By.XPATH, increase_btn_xpath)))
+                        self.safe_click(btn)
+                        time.sleep(0.8)
+                        increase_count += 1
+                    except Exception:
+                        # If + button disappears or isn't clickable then product can't be increased further
+                        self.logger.warning("Could not increase quantity further - reached maximum available")
+                        break
+
+                # Read the quantity after attempting to increase
+                time.sleep(1.5)
+                try:
+                    qty_el = self.q(4).until(EC.presence_of_element_located((By.XPATH, qty_xpath)))
+                    final_qty = safe_get_qty(qty_el)
+                    max_available_qty = max(max_available_qty, final_qty)
+                    
+                    # Check if we've reached the maximum available quantity
+                    if final_qty == current_qty and increase_count == 0:
+                        # Couldn't increase at all, this is the max
+                        break
+                    if final_qty >= desired_qty:
+                        break
+                except Exception:
+                    pass
+
+            except FatalBotError:
+                raise  # Re-raise fatal errors immediately
+            except Exception as e:
+                self.logger.warning(f"Quantity read failed (attempt {attempt}): {e}")
+                time.sleep(1)
+
+        # FINAL VERIFICATION - Check maximum available quantity after all attempts
         try:
-            ts = int(time.time())
-            path = f"screenshots/PRODUCT_OOS_SCROLL_{ts}.png"
-            self.driver.save_screenshot(path)
-            self.logger.info(f"OOS Context Screenshot saved at: {path}")
-        except:
-            pass
-        
-        self._fatal("PRODUCT_OUT_OF_STOCK")
+            qty_el = self.q(3).until(EC.presence_of_element_located((By.XPATH, qty_xpath)))
+            final_qty = safe_get_qty(qty_el)
+            
+            # If final_qty is still 0 but we clicked Add successfully earlier, assume 1
+            if final_qty == 0:
+                 self.logger.warning("Could not read final quantity text (got 0/empty), assuming 1 since 'Add' was clicked.")
+                 final_qty = 1
+            
+            max_available_qty = max(max_available_qty, final_qty)
+            
+            if final_qty >= desired_qty:
+                self.logger.success(f"FINAL QUANTITY: {final_qty}/{desired_qty} - SUCCESS")
+            else:
+                self.logger.warning(f"FINAL QUANTITY: {final_qty}/{desired_qty} - LESS THAN DESIRED")
+            
+            # Only record warnings if there's an actual quantity issue
+            if final_qty < desired_qty: # use final_qty instead of max_available_qty for final check
+                if not self.allow_less_qty:
+                    # If allow_less_qty is disabled, this is a fatal error
+                    self.logger.error(f"[STOCK] Quantity {final_qty} < desired {desired_qty} and allow_less_qty is disabled - stopping all workers")
+                    self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
+                    self._fatal("QTY_TOO_LOW")  # This will raise FatalBotError
+                else:
+                    # If allow_less_qty is enabled, just record a warning (not fatal)
+                    self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
+                    self.logger.warning(f"[STOCK] Available quantity {final_qty} < desired {desired_qty} but allow_less_qty is enabled - continuing")
+            # If final_qty >= desired_qty, no warning needed - quantity is sufficient
+        except FatalBotError:
+            raise  # Re-raise fatal errors immediately
+        except Exception as e:
+            # If verification REALLY fails (element gone?), don't crash if we allow less qty
+            if self.allow_less_qty:
+                 self.logger.warning(f"Quantity verification error: {e}. Continuing assuming successful add.")
+            else:
+                 self.logger.error(f"Could not verify final quantity: {e}")
+                 self._fatal("QTY_VERIFICATION_FAILED")
 
     # ------------------------------------------------------------------
     # Add all products
