@@ -225,7 +225,7 @@ class FlipkartSniper:
 
         if should_be_headless:
             self.logger.info("Running in HEADLESS mode (VPS optimized)")
-            self.options.add_argument("--headless=new")
+            # self.options.add_argument("--headless=new")
             self.options.add_argument("--window-size=1920,1080")
             # Hide scrollbars in headless to avoid screenshot issues
             self.options.add_argument("--hide-scrollbars")
@@ -281,7 +281,7 @@ class FlipkartSniper:
         
         # Resource optimization
         self.options.add_argument("--disable-extensions")
-        self.options.add_argument("--headless=new")
+        # self.options.add_argument("--headless=new")
         self.options.add_argument("--disable-background-networking")
         self.options.add_argument("--disable-background-timer-throttling")
         self.options.add_argument("--disable-renderer-backgrounding")
@@ -548,46 +548,49 @@ class FlipkartSniper:
         self.logger.step("CLEAR_CART", "STARTED")
         self.logger.info("Navigating to cart page...")
         self.driver.get("https://www.flipkart.com/viewcart?marketplace=GROCERY")
-        time.sleep(0.3)
+        time.sleep(0.5)  # Give page time to load
         removed_count = 0
         
-        max_attempts = 50  # Prevent infinite loop
+        max_attempts = 50
         attempt = 0
         
         while attempt < max_attempts:
             attempt += 1
             removed = False
             
-            # Try to find remove button using multiple xpaths
+            # Updated XPaths to match the actual HTML structure
             for xpath in [
-                "//img[contains(@src,'d60e8bff')]/parent::div",
-                "//div[text()='Remove ' and contains(@class,'r-op4f77')]"
+                "//div[contains(@class, 'css-1rynq56') and contains(text(), 'Remove')]",
+                "//div[@dir='auto' and contains(text(), 'Remove ')]",
+                "//div[text()='Remove ']"
             ]:
                 try:
-                    # Use find_elements (no wait) for instant check
                     elements = self.driver.find_elements(By.XPATH, xpath)
                     for el in elements:
                         if el.is_displayed():
-                            self.safe_click(el)
-                            time.sleep(0.1)
+                            # Click the parent div which is the actual clickable button
+                            parent = el.find_element(By.XPATH, "..")
+                            self.safe_click(parent)
+                            time.sleep(0.2)
                             
                             # Try to click confirm button
                             try:
-                                confirm_btns = self.driver.find_elements(By.XPATH, "//button[text()='Remove' or text()='REMOVE']")
+                                confirm_btns = self.driver.find_elements(By.XPATH, 
+                                    "//button[contains(text(), 'Remove') or contains(text(), 'REMOVE')]")
                                 for btn in confirm_btns:
                                     if btn.is_displayed():
                                         self.safe_click(btn)
                                         break
-                                time.sleep(0.1)
+                                time.sleep(0.2)
                             except Exception:
                                 pass
                             
                             removed = True
                             removed_count += 1
                             self.logger.info(f"Removed item #{removed_count} from cart")
-                            time.sleep(0.1)
+                            time.sleep(0.2)
                             break
-                except Exception:
+                except Exception as e:
                     pass
                 
                 if removed:
@@ -595,12 +598,12 @@ class FlipkartSniper:
             
             if not removed:
                 break
+        
         if removed_count > 0:
             self.logger.info(f"Cart cleared: removed {removed_count} item(s)")
         else:
             self.logger.info("Cart is already empty")
         self.logger.step("CLEAR_CART", "SUCCESS")
-
     # ------------------------------------------------------------------
     # Add single product
     # ------------------------------------------------------------------
@@ -2271,9 +2274,9 @@ if __name__ == "__main__":
     from imap import otp
     print("[TOP] Imported otp supplier")
 
-    PHONE = "nigga@heyalex.store"
+    PHONE = "flipkart342@husan.shop"
     ADDRESS = {
-        "name": "Dinesh Singh", "phone": "9303530534", "pincode": "580020",
+        "name": "Dinesh Singh", "phone": "9303530524", "pincode": "580020",
         "address_line1": "Near Railway Station, Main Road", "address_line2": "Ward No 12"
     }
     PRODUCTS = {

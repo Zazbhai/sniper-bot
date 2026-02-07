@@ -71,7 +71,7 @@ def pop_coupon():
         try:
             with open(COUPON_FILE, "r", encoding="utf-8") as infile, open(temp_file, "w", encoding="utf-8") as outfile:
                 for line in infile:
-                    stripped = line.strip()
+                    stripped = line.strip().replace("\\n", "")
                     if not stripped:
                         continue
                     if first_line:
@@ -400,7 +400,7 @@ def restore_coupon(coupon):
             # Only append if not exists (much faster than read-all, modify, write-all)
             if not coupon_exists:
                 with open(COUPON_FILE, "a", encoding="utf-8") as f:
-                    f.write(coupon + "\\n")
+                    f.write(coupon + "\n")
                 print(f"[COUPON RESTORE] ✅ Successfully restored coupon '{coupon}' to coupon.txt")
                 return True
             return True  # Already exists, so technically "restored"
