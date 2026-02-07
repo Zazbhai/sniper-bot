@@ -58,8 +58,14 @@ class BotLogger:
     
     def log(self, message, level="INFO"):
         """Log a message to both file and shared location"""
+        # #region agent log
+        import json; log_file = r"c:\Users\zgarm\OneDrive\Desktop\flipkart automation\.cursor\debug.log"; open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"main.py:59","message":"BotLogger.log entry","data":{"message":repr(message),"has_backslash_n":"\\n" in str(message),"level":level,"hypothesisId":"B"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+        # #endregion
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         log_entry = f"[{timestamp}] [{level}] {message}"
+        # #region agent log
+        open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"main.py:62","message":"BotLogger.log_entry created","data":{"log_entry":repr(log_entry),"has_backslash_n":"\\n" in log_entry,"hypothesisId":"B"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+        # #endregion
         
         # Write to session log file
         try:
@@ -225,14 +231,14 @@ class FlipkartSniper:
 
         if should_be_headless:
             self.logger.info("Running in HEADLESS mode (VPS optimized)")
-            # self.options.add_argument("--headless=new")
+            self.options.add_argument("--headless=new")  # Enable headless mode for VPS
             self.options.add_argument("--window-size=1920,1080")
             # Hide scrollbars in headless to avoid screenshot issues
             self.options.add_argument("--hide-scrollbars")
         
         # Critical Stability Flags (Essential for VPS)
         self.options.add_argument("--no-sandbox")
-        self.options.add_argument("--disable-dev-shm-usage") # Fixes crash on low shm
+        self.options.add_argument("--disable-dev-shm-usage")  # Fixes crash on low shm
         self.options.add_argument("--disable-gpu")
         self.options.add_argument("--disable-software-rasterizer")
         self.options.add_argument("--disable-setuid-sandbox")
@@ -243,10 +249,17 @@ class FlipkartSniper:
         self.options.add_argument("--disable-application-cache")
         # REMOVED: --remote-debugging-port can cause 'unable to connect to renderer' errors
         
-        # Extra stability for low-resource VPS
+        # Extra stability for low-resource VPS (Linux-specific)
         if is_linux:
-            self.options.add_argument("--single-process") 
-            self.options.add_argument("--disable-zygote")
+            # Use multi-process mode for better stability (single-process can cause crashes)
+            # Only use single-process if absolutely necessary for very low-memory VPS
+            # self.options.add_argument("--single-process")  # Disabled - causes instability
+            # self.options.add_argument("--disable-zygote")  # Disabled - can cause crashes
+            # Additional Linux-specific stability flags
+            self.options.add_argument("--disable-backgrounding-occluded-windows")
+            self.options.add_argument("--disable-background-timer-throttling")
+            self.options.add_argument("--disable-renderer-backgrounding")
+            self.options.add_argument("--disable-features=RendererScheduling")
 
         # FIX: Screenshot URL for VPS (Public IP detection)
         if self.screenshot_base_url.startswith("http://localhost"):
@@ -280,11 +293,7 @@ class FlipkartSniper:
         self.options.add_experimental_option("useAutomationExtension", False)
         
         # Resource optimization
-        self.options.add_argument("--disable-extensions")
-        # self.options.add_argument("--headless=new")
         self.options.add_argument("--disable-background-networking")
-        self.options.add_argument("--disable-background-timer-throttling")
-        self.options.add_argument("--disable-renderer-backgrounding")
         self.options.add_argument("--disable-features=TranslateUI,AudioServiceOutOfProcess,IsolateOrigins,site-per-process")
         self.options.add_argument("--disable-ipc-flooding-protection")
         self.options.add_argument("--disable-infobars")
@@ -294,15 +303,19 @@ class FlipkartSniper:
         self.options.add_argument("--no-first-run")
         self.options.add_argument("--ignore-certificate-errors")
         
-        # Memory optimization
+        # Memory optimization (reduced for VPS stability)
         self.options.add_argument("--memory-pressure-off")
-        self.options.add_argument("--js-flags=--max-old-space-size=512")
+        self.options.add_argument("--js-flags=--max-old-space-size=256")  # Reduced from 512 for VPS
+        self.options.add_argument("--max_old_space_size=256")  # Additional memory limit
         
+        # Linux-specific optimizations (consolidated, no duplicates)
         if platform.system() == "Linux":
-             # specific linux optimizations
-            self.options.add_argument("--disable-setuid-sandbox")
-            self.options.add_argument("--single-process") # Helps with stability in some VPS containers
-            self.options.add_argument("--disable-zygot") # Can help if zygote process crashes
+            # Additional stability flags for Linux VPS
+            self.options.add_argument("--disable-breakpad")  # Disable crash reporting
+            self.options.add_argument("--disable-crash-reporter")  # Disable crash reporter
+            self.options.add_argument("--disable-logging")  # Reduce logging overhead
+            self.options.add_argument("--log-level=3")  # Only fatal errors
+            self.options.add_argument("--silent")  # Suppress output
 
         # Allow geolocation
         self.options.add_argument("--enable-geolocation")
@@ -443,10 +456,16 @@ class FlipkartSniper:
         return False
 
     def clear_and_send(self, element, text):
+        # #region agent log
+        import json; log_file = r"c:\Users\zgarm\OneDrive\Desktop\flipkart automation\.cursor\debug.log"; open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"main.py:445","message":"clear_and_send entry","data":{"text":repr(text),"has_backslash_n":"\\n" in str(text),"hypothesisId":"C"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+        # #endregion
         element.clear()
         element.send_keys(Keys.CONTROL + "a")
         element.send_keys(Keys.DELETE)
         element.send_keys(text)
+        # #region agent log
+        open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"main.py:449","message":"clear_and_send completed","data":{"text_sent":repr(text),"hypothesisId":"C"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+        # #endregion
 
     def screenshot(self, name):
         # only attempt screenshot if driver seems alive
@@ -715,6 +734,9 @@ class FlipkartSniper:
             "//div[text()='ADD']",
             "//div[normalize-space(text())='Add']",
             "//div[normalize-space(text())='ADD']",
+            "//div[@dir='auto' and text()='Add']",
+            "//div[contains(@class, 'css-1rynq56') and text()='Add']",
+            "//div[contains(@class, 'r-1awozwy')]//div[text()='Add']",
             "//div[contains(text(), 'Add') and contains(@class, 'r-1777fci')]",
             "//div[contains(text(), 'ADD') and contains(@class, 'r-1777fci')]",
             "//div[normalize-space(text())='Add to cart' or normalize-space(text())='ADD TO CART']",
@@ -760,9 +782,30 @@ class FlipkartSniper:
                 time.sleep(1.0)
             except: pass
                 
-            self.safe_click(add_button)
+            # Robust click mechanism (Standard -> JS -> Retry)
+            clicked = False
+            for i in range(3):
+                try:
+                    add_button.click()
+                    clicked = True
+                    self.logger.info("Standard click successful")
+                    break
+                except Exception as e:
+                    self.logger.warning(f"Standard click failed: {e}, trying JS click...")
+                    try:
+                        self.driver.execute_script("arguments[0].click();", add_button)
+                        clicked = True
+                        self.logger.info("JS click successful")
+                        break
+                    except Exception as js_e:
+                        self.logger.warning(f"JS click failed: {js_e}")
+                        time.sleep(1)
+            
+            if not clicked:
+                self.logger.error("All click attempts failed for Add button")
+            
             time.sleep(2.5) # Increased wait for 'Add' -> 'Qty' transition
-            self.logger.info("Add button clicked successfully")
+            self.logger.info("Add button interaction completed")
         except Exception:
             # Product "Add" button not present → treat as OOS
             self.logger.error("Add button not found - perform OOS debug scroll")
@@ -2151,11 +2194,12 @@ class FlipkartSniper:
             
             try:
                 self.driver = webdriver.Chrome(service=self.service, options=self.options)
-                # Set page load timeout to prevent hanging - Increased to 120s for stability
-                self.driver.set_page_load_timeout(120)
-                self.driver.set_script_timeout(120)
-                # Set implicit wait
-                self.driver.implicitly_wait(5)
+                # Set timeouts optimized for VPS stability
+                # Reduced timeouts to fail faster and prevent resource exhaustion
+                self.driver.set_page_load_timeout(60)  # Reduced from 120s for faster failure
+                self.driver.set_script_timeout(30)  # Reduced from 120s for faster failure
+                # Set implicit wait (reduced for faster failure detection)
+                self.driver.implicitly_wait(3)  # Reduced from 5s
             except WebDriverException as e:
                 self.logger.error(f"Failed to initialize ChromeDriver: {e}")
                 self._fatal("DRIVER_INIT_FAILED")
@@ -2243,13 +2287,22 @@ class FlipkartSniper:
             self._fatal("UNEXPECTED_ERROR")
 
         finally:
-            # ensure driver is quit (silent)
+            # Aggressive cleanup for Linux VPS stability
             try:
                 if self.driver:
                     # Check driver health before quitting
                     try:
                         if self._check_driver_health():
-                            self.driver.quit()
+                            # Try graceful quit first
+                            try:
+                                self.driver.quit()
+                            except Exception:
+                                # If quit fails, force kill
+                                try:
+                                    if hasattr(self.driver, 'service') and self.driver.service:
+                                        self.driver.service.process.kill()
+                                except Exception:
+                                    pass
                         else:
                             # Force kill if unresponsive
                             try:
@@ -2263,6 +2316,20 @@ class FlipkartSniper:
                     finally:
                         # Always clear reference after quit attempt
                         self.driver = None
+                        
+                    # Additional cleanup for Linux VPS - kill orphan processes
+                    if platform.system() == "Linux":
+                        try:
+                            import subprocess
+                            # Kill any remaining Chrome processes for this session
+                            subprocess.run(
+                                ["pkill", "-9", "-f", f"chromedriver.*{self.session_id}"],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL,
+                                timeout=2
+                            )
+                        except Exception:
+                            pass
             except Exception:
                 pass
 

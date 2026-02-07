@@ -60,8 +60,14 @@ def pop_coupon():
     Returns the coupon string or None if empty.
     Optimized to avoid loading entire file for large coupon lists.
     """
+    # #region agent log
+    import json; log_file = r"c:\Users\zgarm\OneDrive\Desktop\flipkart automation\.cursor\debug.log"; open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"connect.py:63","message":"pop_coupon entry","data":{"hypothesisId":"A"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+    # #endregion
     with resource_lock:
         if not os.path.exists(COUPON_FILE):
+            # #region agent log
+            open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"connect.py:65","message":"COUPON_FILE not exists","data":{"hypothesisId":"A"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+            # #endregion
             return None
         
         temp_file = COUPON_FILE + ".tmp"
@@ -71,11 +77,20 @@ def pop_coupon():
         try:
             with open(COUPON_FILE, "r", encoding="utf-8") as infile, open(temp_file, "w", encoding="utf-8") as outfile:
                 for line in infile:
+                    # #region agent log
+                    open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"connect.py:73","message":"Raw line from file","data":{"raw_line":repr(line),"has_backslash_n":"\\n" in line,"hypothesisId":"A"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+                    # #endregion
                     stripped = line.strip().replace("\\n", "")
+                    # #region agent log
+                    open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"connect.py:74","message":"After strip and replace","data":{"stripped":repr(stripped),"has_backslash_n":"\\n" in stripped,"hypothesisId":"A"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+                    # #endregion
                     if not stripped:
                         continue
                     if first_line:
                         coupon = stripped  # First non-empty line is the coupon to pop
+                        # #region agent log
+                        open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"connect.py:78","message":"Coupon extracted","data":{"coupon":repr(coupon),"has_backslash_n":"\\n" in coupon,"hypothesisId":"A"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+                        # #endregion
                         first_line = False
                     else:
                         outfile.write(stripped + "\n")  # Write remaining lines
@@ -83,6 +98,9 @@ def pop_coupon():
             if coupon:
                 # Atomic replace only if we found a coupon
                 os.replace(temp_file, COUPON_FILE)
+                # #region agent log
+                open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"connect.py:85","message":"Coupon returned","data":{"coupon":repr(coupon),"has_backslash_n":"\\n" in coupon,"hypothesisId":"A"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+                # #endregion
             else:
                 # No coupon found, remove temp file
                 if os.path.exists(temp_file):
@@ -94,6 +112,9 @@ def pop_coupon():
             # Cleanup temp file on error
             if os.path.exists(temp_file):
                 os.remove(temp_file)
+            # #region agent log
+            open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"connect.py:97","message":"pop_coupon exception","data":{"error":str(e),"hypothesisId":"A"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+            # #endregion
             return None
 
 def ensure_dirs():
@@ -136,7 +157,7 @@ def csv_write(path, header, row):
 def kill_orphan_chrome():
     """
     Best-effort kill of stray chromedriver and Chrome processes.
-    More aggressive cleanup for RDP environments with limited resources.
+    More aggressive cleanup for Linux VPS with limited resources.
     """
     try:
         if platform.system().lower().startswith("win"):
@@ -147,20 +168,45 @@ def kill_orphan_chrome():
                 stderr=subprocess.DEVNULL,
                 timeout=5
             )
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/IM", "chrome.exe"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5
+            )
         else:
-            # Unix-like: kill chromedriver and headless Chrome
+            # Unix-like: More aggressive cleanup for Linux VPS
+            # Kill chromedriver processes
             subprocess.run(
-                ["pkill", "-f", "chromedriver"],
+                ["pkill", "-9", "-f", "chromedriver"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 timeout=5
             )
+            # Kill all Chrome processes (headless and regular)
             subprocess.run(
-                ["pkill", "-f", "chrome.*headless"],
+                ["pkill", "-9", "-f", "chrome"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 timeout=5
             )
+            # Also try killing by process name directly
+            subprocess.run(
+                ["killall", "-9", "chrome", "chromedriver"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5
+            )
+            # Clean up /tmp/chrome* files that might cause issues
+            try:
+                import glob
+                for tmp_file in glob.glob("/tmp/.com.google.Chrome*"):
+                    try:
+                        os.remove(tmp_file)
+                    except:
+                        pass
+            except:
+                pass
     except subprocess.TimeoutExpired:
         # Process kill timed out, continue
         pass
@@ -192,9 +238,16 @@ def restore_pending_coupons_on_stop():
 
         if pending:
             # Restore coupons to coupon.txt (append)
+            # Clean coupons before restoring to remove any \n characters
+            import re
             with open(COUPON_FILE, "a", encoding="utf-8") as f:
                 for c in pending:
-                    f.write(c + "\n")
+                    # Clean the coupon: remove literal \n sequences and actual newlines
+                    cleaned = c.strip()
+                    cleaned = re.sub(r'\\+n', '', cleaned)
+                    cleaned = cleaned.replace('\n', '').replace('\r', '').strip()
+                    if cleaned:  # Only write non-empty cleaned coupons
+                        f.write(cleaned + "\n")
 
             # Rewrite used_coupon.csv without pending rows
             with open(USED_COUPON_FILE, "w", newline="", encoding="utf-8") as f:
@@ -387,21 +440,40 @@ def restore_coupon(coupon):
     
     try:
         with resource_lock:
+            # Clean the coupon: remove any literal \n sequences and actual newlines
+            # This prevents restoring coupons with embedded newlines
+            import re
+            cleaned_coupon = coupon.strip()
+            # Remove literal \n sequences (backslash followed by n)
+            cleaned_coupon = re.sub(r'\\+n', '', cleaned_coupon)
+            # Remove actual newline characters
+            cleaned_coupon = cleaned_coupon.replace('\n', '').replace('\r', '')
+            # Remove any remaining whitespace
+            cleaned_coupon = cleaned_coupon.strip()
+            
+            if not cleaned_coupon:
+                print(f"[COUPON RESTORE] ⚠️ Cannot restore coupon - cleaned coupon is empty")
+                return False
+            
             # Quick check if coupon exists (stop at first match for speed)
             coupon_exists = False
             if os.path.exists(COUPON_FILE):
                 with open(COUPON_FILE, "r", encoding="utf-8") as f:
                     for line in f:
-                        if line.strip() == coupon:
+                        # Also clean the line for comparison
+                        cleaned_line = line.strip()
+                        cleaned_line = re.sub(r'\\+n', '', cleaned_line)
+                        cleaned_line = cleaned_line.replace('\n', '').replace('\r', '').strip()
+                        if cleaned_line == cleaned_coupon:
                             coupon_exists = True
-                            print(f"[COUPON RESTORE] ℹ️ Coupon '{coupon}' already exists in coupon.txt - skipping restore")
+                            print(f"[COUPON RESTORE] ℹ️ Coupon '{cleaned_coupon}' already exists in coupon.txt - skipping restore")
                             break
             
             # Only append if not exists (much faster than read-all, modify, write-all)
             if not coupon_exists:
                 with open(COUPON_FILE, "a", encoding="utf-8") as f:
-                    f.write(coupon + "\n")
-                print(f"[COUPON RESTORE] ✅ Successfully restored coupon '{coupon}' to coupon.txt")
+                    f.write(cleaned_coupon + "\n")
+                print(f"[COUPON RESTORE] ✅ Successfully restored coupon '{cleaned_coupon}' to coupon.txt")
                 return True
             return True  # Already exists, so technically "restored"
     except Exception as e:
@@ -539,6 +611,11 @@ class ConnectRunner:
         popped_coupon = None
 
         try:
+            # Clean up any orphan Chrome processes before starting (Linux VPS optimization)
+            if platform.system() == "Linux":
+                kill_orphan_chrome()
+                time.sleep(0.5)  # Brief pause to ensure cleanup completes
+            
             # Create session ID for this worker
             session_id = f"worker_{index}_{int(time.time())}"
             sniper = FlipkartSniper(
@@ -562,36 +639,54 @@ class ConnectRunner:
             )
 
             # ============================
-            # DRIVER INITIALIZATION
+            # DRIVER INITIALIZATION (with retry for VPS stability)
             # ============================
-            try:
-                # Create driver (same logic as main.py run() method)
-                # Auto-detect using Selenium Manager (no explicit path check needed)
-                
-                sniper.driver = webdriver.Chrome(service=sniper.service, options=sniper.options)
-                sniper.driver.set_page_load_timeout(30)
-                sniper.driver.implicitly_wait(5)
-                
-                # Hide webdriver flag
+            driver_init_attempts = 0
+            max_driver_init_attempts = 3
+            driver_initialized = False
+            
+            while driver_init_attempts < max_driver_init_attempts and not driver_initialized:
                 try:
-                    sniper.driver.execute_script(
-                        "Object.defineProperty(navigator, 'webdriver', {get: () => false});"
-                    )
-                except Exception:
-                    pass
+                    driver_init_attempts += 1
+                    # Clean up orphan processes before each attempt (Linux VPS)
+                    if platform.system() == "Linux" and driver_init_attempts > 1:
+                        kill_orphan_chrome()
+                        time.sleep(1)  # Wait for cleanup
                     
-                print(f"✅ Worker #{index+1}: Driver initialized successfully")
-                
-            except Exception as e:
-                print(f"❌ Worker #{index+1}: Driver initialization failed: {e}")
-                import traceback
-                traceback.print_exc()
-                # Clean up any partial driver initialization
-                try:
-                    if 'sniper' in locals() and hasattr(sniper, 'driver') and sniper.driver:
-                        sniper.driver.quit()
-                except:
-                    pass
+                    # Create driver (same logic as main.py run() method)
+                    # Auto-detect using Selenium Manager (no explicit path check needed)
+                    sniper.driver = webdriver.Chrome(service=sniper.service, options=sniper.options)
+                    sniper.driver.set_page_load_timeout(30)
+                    sniper.driver.implicitly_wait(5)
+                    
+                    # Hide webdriver flag
+                    try:
+                        sniper.driver.execute_script(
+                            "Object.defineProperty(navigator, 'webdriver', {get: () => false});"
+                        )
+                    except Exception:
+                        pass
+                    
+                    driver_initialized = True
+                    print(f"✅ Worker #{index+1} driver initialized successfully (attempt {driver_init_attempts})")
+                    
+                except Exception as driver_error:
+                    if driver_init_attempts >= max_driver_init_attempts:
+                        # Final attempt failed, raise error
+                        print(f"❌ Worker #{index+1} failed to initialize driver after {max_driver_init_attempts} attempts: {driver_error}")
+                        raise FatalBotError(f"DRIVER_INIT_FAILED | NONE")
+                    else:
+                        # Retry after cleanup
+                        print(f"⚠️ Worker #{index+1} driver init attempt {driver_init_attempts} failed, retrying...")
+                        try:
+                            if sniper.driver:
+                                sniper.driver.quit()
+                        except:
+                            pass
+                        sniper.driver = None
+                        time.sleep(2)  # Wait before retry
+            
+            if not driver_initialized:
                 raise FatalBotError(f"DRIVER_INIT_FAILED | NONE")
 
             # ============================
