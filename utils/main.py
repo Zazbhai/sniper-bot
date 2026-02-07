@@ -2195,7 +2195,7 @@ class FlipkartSniper:
                 return self.fatal_code or "ADD_PRODUCTS_FAILED"
 
             # 5) Apply cart deal (Deal Booster) - ALWAYS try to apply deals
-            time.sleep(2)
+            time.sleep(4)
             self.step_apply_cart_deals(self.deal_keyword)  # Works with or without keyword
             if self.fatal_error:
                 return self.fatal_code or "DEAL_APPLY_FAILED"
