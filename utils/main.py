@@ -261,6 +261,31 @@ class FlipkartSniper:
             self.options.add_argument("--disable-renderer-backgrounding")
             self.options.add_argument("--disable-features=RendererScheduling")
 
+        # Enhanced Stability and Performance Flags (Aggressive Optimization)
+        # Apply to crucial stability and anti-crash settings
+        self.options.add_argument("--disable-infobars")
+        self.options.add_argument("--disable-notifications")
+        self.options.add_argument("--disable-popup-blocking")
+        self.options.add_argument("--ignore-certificate-errors")
+        self.options.add_argument("--disable-blink-features=AutomationControlled") # Prevent detection crashes
+        self.options.add_argument("--disable-features=VizDisplayCompositor")
+        self.options.add_argument("--disable-features=IsolateOrigins,site-per-process") # Crucial for memory reduction
+        self.options.add_argument("--disable-browser-side-navigation")
+        self.options.add_argument("--disable-gpu-sandbox")
+        self.options.add_argument("--disable-accelerated-2d-canvas")
+        self.options.add_argument("--disable-background-networking")
+        self.options.add_argument("--disable-default-apps")
+        self.options.add_argument("--disable-sync")
+        self.options.add_argument("--disable-translate")
+        self.options.add_argument("--hide-scrollbars")
+        self.options.add_argument("--metrics-recording-only")
+        self.options.add_argument("--mute-audio")
+        self.options.add_argument("--no-first-run")
+        self.options.add_argument("--safebrowsing-disable-auto-update")
+        # Anti-detection experimental options
+        self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        self.options.add_experimental_option("useAutomationExtension", False)
+
         # FIX: Screenshot URL for VPS (Public IP detection)
         if self.screenshot_base_url.startswith("http://localhost"):
             try:
