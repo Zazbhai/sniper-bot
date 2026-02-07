@@ -215,6 +215,7 @@ class FlipkartSniper:
                 port = os.environ.get("FLASK_PORT", "5000")
                 self.screenshot_base_url = f"http://localhost:{port}/screenshots"
         self.options = webdriver.ChromeOptions()
+        self.options.set_capability("pageLoadStrategy", "eager")  # Speed up: don't wait for full assets
         
  
         

@@ -659,7 +659,8 @@ class ConnectRunner:
                     # Auto-detect using Selenium Manager (no explicit path check needed)
                     sniper.driver = webdriver.Chrome(service=sniper.service, options=sniper.options)
                     sniper.driver.set_page_load_timeout(30)
-                    sniper.driver.implicitly_wait(5)
+                    sniper.driver.set_page_load_timeout(30)
+                    sniper.driver.implicitly_wait(2)  # Reduced from 5s to 2s for faster fail-over
                     
                     # Hide webdriver flag
                     try:
