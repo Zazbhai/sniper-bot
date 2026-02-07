@@ -5758,7 +5758,7 @@ setInterval(()=>{
             const runlog = document.getElementById("runlog");
             if (runlog) {
                 safeFetch("/logs").then(r=>r.json()).then(data=>{
-                    runlog.innerText = data.join("\\n");
+                    runlog.innerText = data.join("\n");
                     runlog.scrollTop = runlog.scrollHeight;
                 }).catch(e => {
                     if (!isConnectionError(e)) {
