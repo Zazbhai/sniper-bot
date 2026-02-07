@@ -168,12 +168,13 @@ def kill_orphan_chrome():
                 stderr=subprocess.DEVNULL,
                 timeout=5
             )
-            subprocess.run(
-                ["taskkill", "/F", "/T", "/IM", "chrome.exe"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=5
-            )
+            # DO NOT kill chrome.exe on Windows - it kills user's main browser!
+            # subprocess.run(
+            #     ["taskkill", "/F", "/T", "/IM", "chrome.exe"],
+            #     stdout=subprocess.DEVNULL,
+            #     stderr=subprocess.DEVNULL,
+            #     timeout=5
+            # )
         else:
             # Unix-like: More aggressive cleanup for Linux VPS
             # Kill chromedriver processes
@@ -658,9 +659,8 @@ class ConnectRunner:
                     # Create driver (same logic as main.py run() method)
                     # Auto-detect using Selenium Manager (no explicit path check needed)
                     sniper.driver = webdriver.Chrome(service=sniper.service, options=sniper.options)
-                    sniper.driver.set_page_load_timeout(30)
-                    sniper.driver.set_page_load_timeout(30)
-                    sniper.driver.implicitly_wait(2)  # Reduced from 5s to 2s for faster fail-over
+                    sniper.driver.set_page_load_timeout(120)  # Increased to 120s for slow connections
+                    sniper.driver.implicitly_wait(10)  # Increased to 10s for slow loading elements
                     
                     # Hide webdriver flag
                     try:
@@ -1491,20 +1491,39 @@ class ConnectRunner:
         """
         self.stop_requested = True
         alive = [p for p in self.processes if p.is_alive()]
-        stopped = 0
+        
+        # 1. Send SIGTERM to all simultaneousy
         for p in alive:
             try:
                 p.terminate()
-                p.join(timeout=5)
-                if p.is_alive() and hasattr(p, "kill"):
-                    p.kill()
-                    p.join(timeout=2)
-                stopped += 1
             except Exception:
-                continue
+                pass
+        
+        # 2. Wait up to 5s for ALL to finish (parallel wait)
+        start_wait = time.time()
+        while time.time() - start_wait < 5:
+            if not any(p.is_alive() for p in alive):
+                break
+            time.sleep(0.1)
+            
+        # 3. Force kill any stragglers
+        stopped = 0
+        for p in alive:
+            if p.is_alive():
+                try:
+                    if hasattr(p, "kill"):
+                        p.kill()
+                        p.join(timeout=1) # Short wait for kill
+                except:
+                    pass
+            stopped += 1
+
         # prune list
         self.processes = [p for p in self.processes if p.is_alive()]
-        # Best-effort cleanup of any orphaned Chrome processes
+        
+        # Best-effort cleanup (only run if we actually stopped something or if requested)
+        # Note: kill_orphan_chrome might be dangerous if other bots are running, 
+        # but stop_all_workers implies stopping everything.
         kill_orphan_chrome()
         restore_pending_coupons_on_stop()
         return stopped

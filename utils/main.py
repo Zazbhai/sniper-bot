@@ -232,7 +232,7 @@ class FlipkartSniper:
 
         if should_be_headless:
             self.logger.info("Running in HEADLESS mode (VPS optimized)")
-            self.options.add_argument("--headless=new")  # Enable headless mode for VPS
+            # self.options.add_argument("--headless=new")  # Enable headless mode for VPS
             self.options.add_argument("--window-size=1920,1080")
             # Hide scrollbars in headless to avoid screenshot issues
             self.options.add_argument("--hide-scrollbars")
@@ -350,13 +350,13 @@ class FlipkartSniper:
 
         # FIX: Allow geolocation automatically
         prefs = {
-            "profile.default_content_setting_values.geolocation": 1,
+            "profile.default_content_setting_values.geolocation": 0,
             "profile.default_content_settings.popups": 0,
         }
         self.options.add_experimental_option("prefs", prefs)
 
         mobile_emulation = {
-    "deviceName": "Pixel 7"
+    "deviceName": "iPhone 14 Pro Max"
 }
         self.options.add_experimental_option("mobileEmulation", mobile_emulation)
 
@@ -408,7 +408,31 @@ class FlipkartSniper:
     # ------------------------------------------------------------------
     # Helper methods
     # ------------------------------------------------------------------
-    def q(self, t=3):
+    def get_with_retry(self, url, retries=3):
+        """Navigate to URL with retries for timeout/loading errors"""
+        for i in range(retries):
+            try:
+                self.logger.info(f"Navigating to {url} (attempt {i+1}/{retries})")
+                self.driver.get(url)
+                return True
+            except TimeoutException:
+                self.logger.warning(f"Page load timeout for {url}")
+                # If page load times out, sometimes it's still usable. 
+                # We can try to stop loading and proceed, or retry.
+                try:
+                    self.driver.execute_script("window.stop();")
+                    self.logger.info("Stopped page load after timeout, attempting to proceed...")
+                    return True
+                except:
+                    pass
+            except Exception as e:
+                self.logger.warning(f"Navigation failed: {e}")
+                time.sleep(2)
+        
+        self.logger.error(f"Failed to load {url} after {retries} attempts")
+        self._fatal("NAVIGATION_FAILED")
+
+    def q(self, t=10):
         return WebDriverWait(self.driver, t, poll_frequency=0.3, ignored_exceptions=[
             NoSuchElementException, StaleElementReferenceException, 
             TimeoutException, WebDriverException
@@ -509,9 +533,9 @@ class FlipkartSniper:
         self.logger.step("LOGIN", "STARTED")
         if not self._check_driver_health():
             self._fatal("DRIVER_UNRESPONSIVE")
-        self.driver.get(self.FLIPKART_LOGIN_URL)
+        self.get_with_retry(self.FLIPKART_LOGIN_URL)
         time.sleep(1)
-        login_input = self.q(5).until(
+        login_input = self.q(20).until(
             EC.element_to_be_clickable((
                 By.XPATH,
                 "//input[contains(@class,'jwCbxy') and (@type='text' or @type='email')]"
@@ -520,27 +544,27 @@ class FlipkartSniper:
         self.clear_and_send(login_input, self.PHONE_NUMBER)
         self.logger.info(f"Entered login ID: {self.PHONE_NUMBER}")
         self.safe_click(
-            self.q(5).until(
+            self.q(20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class,'xqOMQN')]"))
             )
         )
         self.logger.info("Waiting for Flipkart OTP via email...")
-        for attempt in range(14):
+        for attempt in range(20):
             OTP_CODE = otp_supplier(self.PHONE_NUMBER)
             if OTP_CODE:
                 self.logger.success(f"Got OTP: {OTP_CODE}")
                 break
-            self.logger.info(f"OTP not received yet (attempt {attempt+1}/14), retrying...")
-            time.sleep(2)
+            self.logger.info(f"OTP not received yet (attempt {attempt+1}/20), retrying...")
+            time.sleep(3)
         else:
             # OTP failure is fatal for this run
             self._fatal("OTP_NOT_RECEIVED")
 
-        self.q(5).until(
+        self.q(20).until(
             EC.element_to_be_clickable((By.XPATH, "//input[contains(@class,'S1KmoO')]"))
         ).send_keys(OTP_CODE)
         self.safe_click(
-            self.q(5).until(
+            self.q(20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class,'xqOMQN')]"))
             )
         )
@@ -554,7 +578,7 @@ class FlipkartSniper:
     def step_add_address(self):
         self.logger.step("ADDRESS", "STARTED")
         self.logger.info("Navigating to address page...")
-        self.driver.get(self.ADD_ADDRESS_URL)
+        self.get_with_retry(self.ADD_ADDRESS_URL)
         time.sleep(2)
         try:
             self.safe_click(self.driver.find_element(By.XPATH, "//button[text()='CANCEL']"))
@@ -562,29 +586,22 @@ class FlipkartSniper:
         except Exception:
             pass
         self.logger.info(f"Filling name: {self.ADDRESS_DATA['name']}")
-        self.clear_and_send(self.q(5).until(EC.presence_of_element_located((By.NAME, "name"))), self.ADDRESS_DATA["name"])
+        self.clear_and_send(self.q(20).until(EC.visibility_of_element_located((By.NAME, "name"))), self.ADDRESS_DATA["name"])
         self.logger.info(f"Filling phone: {self.ADDRESS_DATA['phone']}")
-        self.clear_and_send(self.q(5).until(EC.presence_of_element_located((By.NAME, "phone"))), self.ADDRESS_DATA["phone"])
+        self.clear_and_send(self.q(15).until(EC.visibility_of_element_located((By.NAME, "phone"))), self.ADDRESS_DATA["phone"])
         self.logger.info(f"Filling pincode: {self.ADDRESS_DATA['pincode']}")
-        self.clear_and_send(self.q(5).until(EC.presence_of_element_located((By.NAME, "pincode"))), self.ADDRESS_DATA["pincode"])
+        self.clear_and_send(self.q(15).until(EC.visibility_of_element_located((By.NAME, "pincode"))), self.ADDRESS_DATA["pincode"])
         self.logger.info(f"Filling address line 1: {self.ADDRESS_DATA['address_line1']}")
-        self.clear_and_send(self.q(5).until(EC.presence_of_element_located((By.NAME, "addressLine1"))), self.ADDRESS_DATA["address_line1"])
+        self.clear_and_send(self.q(15).until(EC.visibility_of_element_located((By.NAME, "addressLine1"))), self.ADDRESS_DATA["address_line1"])
         self.logger.info(f"Filling address line 2: {self.ADDRESS_DATA['address_line2']}")
-        self.clear_and_send(self.q(5).until(EC.presence_of_element_located((By.NAME, "addressLine2"))), self.ADDRESS_DATA["address_line2"])
+        self.clear_and_send(self.q(15).until(EC.visibility_of_element_located((By.NAME, "addressLine2"))), self.ADDRESS_DATA["address_line2"])
         time.sleep(2)
         self.logger.info("Clicking Save Address button...")
-        self.safe_click(self.q(5).until(EC.element_to_be_clickable((By.XPATH, "//input[@value='Save Address']"))))
-        time.sleep(1.3)
+        self.safe_click(self.q(15).until(EC.element_to_be_clickable((By.XPATH, "//input[@value='Save Address']"))))
+        time.sleep(3)
         self.logger.step("ADDRESS", "SUCCESS")
 
-        # Debug screenshot after address save
-        try:
-            ts = int(time.time())
-            path = f"screenshots/address_debug_{ts}.png"
-            self.driver.save_screenshot(path)
-            self.logger.info(f"Address Debug Screenshot saved at: {path}")
-        except:
-            pass
+        
 
     # ------------------------------------------------------------------
     # Clear cart
@@ -593,61 +610,86 @@ class FlipkartSniper:
         self.logger.step("CLEAR_CART", "STARTED")
         self.logger.info("Navigating to cart page...")
         self.driver.get("https://www.flipkart.com/viewcart?marketplace=GROCERY")
-        time.sleep(0.5)  # Give page time to load
+        time.sleep(2)
+        
         removed_count = 0
+        start_time = time.time()
+        timeout = 2  # 4 seconds timeout
         
-        max_attempts = 50
-        attempt = 0
-        
-        while attempt < max_attempts:
-            attempt += 1
-            removed = False
+        while (time.time() - start_time) < timeout:
+            action_taken = False
             
-            # Updated XPaths to match the actual HTML structure
-            for xpath in [
-                "//div[contains(@class, 'css-1rynq56') and contains(text(), 'Remove')]",
-                "//div[@dir='auto' and contains(text(), 'Remove ')]",
-                "//div[text()='Remove ']"
-            ]:
+            # Try minus button first
+            minus_xpaths = [
+                "//img[contains(@src, 'd60e8bff')]",
+                "//div[text()='-']",
+            ]
+            
+            for xpath in minus_xpaths:
                 try:
                     elements = self.driver.find_elements(By.XPATH, xpath)
                     for el in elements:
                         if el.is_displayed():
-                            # Click the parent div which is the actual clickable button
+                            parent = el.find_element(By.XPATH, "..")
+                            self.safe_click(parent)
+                            removed_count += 1
+                            self.logger.info(f"Clicked minus button (#{removed_count})")
+                            action_taken = True
+                            time.sleep(0.2)
+                            start_time = time.time()  # Reset timer after action
+                            break
+                except:
+                    pass
+                if action_taken:
+                    break
+            
+            if action_taken:
+                continue
+            
+            # Try remove button if no minus found
+            remove_xpaths = [
+                "//div[contains(@class, 'css-1rynq56') and contains(text(), 'Remove')]",
+                "//div[text()='Remove ']",
+            ]
+            
+            for xpath in remove_xpaths:
+                try:
+                    elements = self.driver.find_elements(By.XPATH, xpath)
+                    for el in elements:
+                        if el.is_displayed():
                             parent = el.find_element(By.XPATH, "..")
                             self.safe_click(parent)
                             time.sleep(0.2)
                             
-                            # Try to click confirm button
+                            # Click confirmation
                             try:
                                 confirm_btns = self.driver.find_elements(By.XPATH, 
-                                    "//button[contains(text(), 'Remove') or contains(text(), 'REMOVE')]")
+                                    "//button[contains(text(), 'Remove')]")
                                 for btn in confirm_btns:
                                     if btn.is_displayed():
                                         self.safe_click(btn)
                                         break
-                                time.sleep(0.2)
-                            except Exception:
+                            except:
                                 pass
                             
-                            removed = True
                             removed_count += 1
-                            self.logger.info(f"Removed item #{removed_count} from cart")
+                            self.logger.info(f"Clicked remove button (#{removed_count})")
+                            action_taken = True
                             time.sleep(0.2)
+                            start_time = time.time()  # Reset timer after action
                             break
-                except Exception as e:
+                except:
                     pass
-                
-                if removed:
+                if action_taken:
                     break
             
-            if not removed:
-                break
+            time.sleep(0.1)
         
         if removed_count > 0:
-            self.logger.info(f"Cart cleared: removed {removed_count} item(s)")
+            self.logger.info(f"Cart cleared: {removed_count} action(s)")
         else:
             self.logger.info("Cart is already empty")
+        
         self.logger.step("CLEAR_CART", "SUCCESS")
     # ------------------------------------------------------------------
     # Add single product
@@ -696,281 +738,164 @@ class FlipkartSniper:
             self.logger.error(f"[STOCK] Failed to write stock warning: {e}")
 
     def step_add_single_product(self, product_url, desired_qty):
-        self.logger.info(f"Adding product: {product_url} | Desired Qty: {desired_qty}")
-        # Retry navigation to handle renderer timeouts
+        self.logger.info(f"Adding product: {product_url} | Target Qty: {desired_qty}")
+        
+        # 1. Navigation with Retry
         for attempt in range(3):
             try:
-                self.driver.get(product_url)
+                self.get_with_retry(product_url)
                 break
-            except (TimeoutException, WebDriverException) as e:
-                self.logger.warning(f"Navigation failed (attempt {attempt+1}/3): {e}")
-                if attempt == 2:
-                    self.logger.error("Failed to load product page after 3 attempts")
-                    self._fatal("PAGE_LOAD_FAILED")
-                time.sleep(3)
+            except Exception as e:
+                if attempt == 2: self._fatal("PAGE_LOAD_FAILED")
+                time.sleep(2)
         
-        # Give page time to load and React components to settle (Grocery is slow)
-        time.sleep(3)
-
-        # Get product name with robust fallbacks
+        time.sleep(2.5) # Let React hydration finish
+        
+        # 2. Extract Product Name (Best Effort)
         product_name = "Unknown Product"
         try:
-            # wait briefly for any title element
-            name_selector = "span.B_NuCI, h1.yhB1nd, h1, div.css-1rynq56.r-8akbws.r-krxsd3"
-            try:
-                product_name_element = self.driver.find_element(By.CSS_SELECTOR, name_selector)
-                product_name = product_name_element.text.strip()
-            except:
-                # Fallback to the complex React class
-                product_name_element = self.driver.find_element(By.CSS_SELECTOR, "div.css-1rynq56.r-8akbws.r-krxsd3.r-dnmrzs.r-1udh08x.r-1udbk01")
-                product_name = product_name_element.text.strip()
+            name_el = self.driver.execute_script("""
+                return document.querySelector('span.B_NuCI') || 
+                       document.querySelector('h1') || 
+                       document.querySelector('.css-1rynq56.r-8akbws');
+            """)
+            if name_el: product_name = name_el.text.strip()
+            self.logger.info(f"Product: {product_name}")
+        except: pass
+
+        # 3. ROBUST ADD BUTTON FINDING & CLICKING
+        add_btn = None
+        try:
+            # Primary strategy: Exact text match via XPath (most reliable for "Add")
+            # We look for "Add" or "ADD" specifically
+            add_xpaths = [
+                "//div[contains(text(), 'Add') or contains(text(), 'ADD')][contains(@class, 'r-1777fci')]", # Common Grocery red button
+                "//button[contains(text(), 'Add') or contains(text(), 'ADD')]",
+                "//div[normalize-space()='Add']",
+                "//div[normalize-space()='ADD']"
+            ]
             
-            self.logger.info(f"Product Name: {product_name}")
-            # Give page one more second to settle before clicking critical buttons
-            time.sleep(1)
-        except Exception as e:
-            try:
-                 h1s = self.driver.find_elements(By.TAG_NAME, "h1")
-                 for h in h1s:
-                     if h.is_displayed() and len(h.text.strip()) > 5:
-                         product_name = h.text.strip()
-                         self.logger.info(f"Product Name (fallback): {product_name}")
-                         break
-            except:
-                self.logger.warning(f"Could not extract product name: {e}")
-
-        # Try to dismiss any potential location picker / overlay 
-        # try:
-        #     # Clicking body helps clear some focus-based overlays
-        #     self.driver.find_element(By.TAG_NAME, "body").click()
-        #     time.sleep(0.5)
-        #     # Find and click cross/close buttons
-        #     close_buttons = self.driver.find_elements(By.XPATH, "//div[contains(@class,'close')] | //img[contains(@src,'cross')] | //div[text()='✕']")
-        #     for cb in close_buttons:
-        #         if cb.is_displayed():
-        #             cb.click()
-        #             time.sleep(0.5)
-        # except:
-        #     pass
-
-        # Click Add - comprehensive Grocery selectors
-        add_button = None
-        add_xpaths = [
-            "//div[text()='Add']",
-            "//div[text()='ADD']",
-            "//div[normalize-space(text())='Add']",
-            "//div[normalize-space(text())='ADD']",
-            "//div[contains(text(), 'Add') and contains(@class, 'r-1777fci')]",
-            "//div[contains(text(), 'ADD') and contains(@class, 'r-1777fci')]",
-            "//div[normalize-space(text())='Add to cart' or normalize-space(text())='ADD TO CART']",
-            "//div[contains(@class, 'r-1m93j0t')]//div[text()='Add' or text()='ADD']",
-        ]
-
-        self.logger.info("Looking for Add button...")
-        time.sleep(1.0) # Brief pause before search
-        for xpath in add_xpaths:
-            try:
-                btns = self.driver.find_elements(By.XPATH, xpath)
-                for btn in btns:
-                    if btn.is_displayed():
-                        add_button = btn
-                        break
-                if add_button: break
-            except: continue
-
-        # Recovery scroll attempt
-        if not add_button:
-            self.logger.info("Add button not found, performing recovery scroll...")
-            for scroll_amt in [400, 800]:
-                self.driver.execute_script(f"window.scrollBy(0, {scroll_amt});")
+            for xpath in add_xpaths:
+                try:
+                    btns = self.driver.find_elements(By.XPATH, xpath)
+                    for b in btns:
+                        if b.is_displayed() and b.is_enabled():
+                            # Double check it's not the navbar "Add address"
+                            if "address" in b.text.lower(): continue
+                            add_btn = b
+                            break
+                    if add_btn: break
+                except: continue
+                
+            if not add_btn:
+                # Scroll and try again
+                self.driver.execute_script("window.scrollBy(0, 400);")
                 time.sleep(1)
                 for xpath in add_xpaths:
                     try:
                         btns = self.driver.find_elements(By.XPATH, xpath)
-                        for btn in btns:
-                            if btn.is_displayed():
-                                add_button = btn
+                        for b in btns:
+                            if b.is_displayed():
+                                add_btn = b
                                 break
-                        if add_button: break
+                        if add_btn: break
                     except: continue
-                if add_button: break
 
-        try:
-            if not add_button:
-                raise NoSuchElementException("Add button not found")
+            if not add_btn:
+                self.logger.error("Add button NOT found after search & scroll")
+                # Capture OOS screenshot
+                self._fatal("PRODUCT_OUT_OF_STOCK")
             
-            # Explicit scroll + pause before clicking (Critical for VPS)
-            try:
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", add_button)
-                time.sleep(1.0)
+            # 4. AGGRESSIVE CLICKING
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", add_btn)
+            time.sleep(0.5)
+            
+            # Force JS Click first (most reliable)
+            self.logger.info(f"Found Add button, executing JS click...")
+            self.driver.execute_script("arguments[0].click();", add_btn)
+            time.sleep(0.2)
+            # Backup: Native click just in case
+            try: add_btn.click() 
             except: pass
-                
-            # Robust click mechanism (Standard -> JS -> Retry)
-            clicked = False
-            for i in range(3):
-                try:
-                    add_button.click()
-                    clicked = True
-                    self.logger.info("Standard click successful")
-                    break
-                except Exception as e:
-                    self.logger.warning(f"Standard click failed: {e}, trying JS click...")
-                    try:
-                        self.driver.execute_script("arguments[0].click();", add_button)
-                        clicked = True
-                        self.logger.info("JS click successful")
-                        break
-                    except Exception as js_e:
-                        self.logger.warning(f"JS click failed: {js_e}")
-                        time.sleep(1)
             
-            if not clicked:
-                self.logger.error("All click attempts failed for Add button")
+            self.logger.info("Click command sent. Waiting for quantity controls...")
+            time.sleep(2) # Wait for "Add" to become quantity controls
             
-            time.sleep(2.5) # Increased wait for 'Add' -> 'Qty' transition
-            self.logger.info("Add button interaction completed")
-        except Exception:
-            # Product "Add" button not present → treat as OOS
-            self.logger.error("Add button not found - perform OOS debug scroll")
-            
-            # Scroll down to capture more context in screenshot
-            try:
-                self.driver.execute_script("window.scrollTo(0, 1000);") 
-                time.sleep(0.5)
-                # Physical keys
-                try:
-                    body = self.driver.find_element(By.TAG_NAME, "body")
-                    body.click()
-                    for _ in range(5):
-                        body.send_keys(Keys.PAGE_DOWN)
-                        time.sleep(0.2)
-                except: pass
-            except Exception: pass
-                
-            # Local screenshot
-            try:
-                ts = int(time.time())
-                path = f"screenshots/PRODUCT_OOS_SCROLL_{ts}.png"
-                self.driver.save_screenshot(path)
-                self.logger.info(f"OOS Context Screenshot saved at: {path}")
-            except: pass
-
-            self._fatal("PRODUCT_OUT_OF_STOCK")
-
-        qty_xpath = "//div[contains(@class,'r-1cenzwm') and contains(@class,'r-1b43r93')]"
-        increase_btn_xpath = "(//div[contains(@style,'rgb(133, 60, 14)')])[last()]"
-
-        # Two attempts to update quantity and find maximum available
-        # Helper for converting text to quantity safely
-        def safe_get_qty(element):
-            try:
-                txt = element.text.strip()
-                # Check value attribute for inputs
-                if not txt:
-                    txt = element.get_attribute("value") or ""
-                
-                if not txt:
-                    return 0
-                
-                digits = "".join(filter(str.isdigit, txt))
-                return int(digits) if digits else 0
-            except:
-                return 0
-
-        # Two attempts to update quantity and find maximum available
-        max_available_qty = 0
-        for attempt in range(1, 3):
-            try:
-                qty_el = self.q(4).until(EC.presence_of_element_located((By.XPATH, qty_xpath)))
-                current_qty = safe_get_qty(qty_el)
-                
-                # Retry if 0 and we expect >0 (maybe loading)
-                if current_qty == 0:
-                    time.sleep(0.5)
-                    current_qty = safe_get_qty(qty_el)
-                
-                max_available_qty = max(max_available_qty, current_qty)
-
-                if current_qty >= desired_qty:
-                    self.logger.info(f"Quantity OK: {current_qty}/{desired_qty}")
-                    break
-
-                missing = desired_qty - current_qty
-                self.logger.info(f"Attempt {attempt}/2 → Current: {current_qty}, Missing: {missing}")
-
-                # Try to increase quantity
-                increase_count = 0
-                for _ in range(missing):
-                    try:
-                        btn = self.q(2).until(EC.element_to_be_clickable((By.XPATH, increase_btn_xpath)))
-                        self.safe_click(btn)
-                        time.sleep(0.8)
-                        increase_count += 1
-                    except Exception:
-                        # If + button disappears or isn't clickable then product can't be increased further
-                        self.logger.warning("Could not increase quantity further - reached maximum available")
-                        break
-
-                # Read the quantity after attempting to increase
-                time.sleep(1.5)
-                try:
-                    qty_el = self.q(4).until(EC.presence_of_element_located((By.XPATH, qty_xpath)))
-                    final_qty = safe_get_qty(qty_el)
-                    max_available_qty = max(max_available_qty, final_qty)
-                    
-                    # Check if we've reached the maximum available quantity
-                    if final_qty == current_qty and increase_count == 0:
-                        # Couldn't increase at all, this is the max
-                        break
-                    if final_qty >= desired_qty:
-                        break
-                except Exception:
-                    pass
-
-            except FatalBotError:
-                raise  # Re-raise fatal errors immediately
-            except Exception as e:
-                self.logger.warning(f"Quantity read failed (attempt {attempt}): {e}")
-                time.sleep(1)
-
-        # FINAL VERIFICATION - Check maximum available quantity after all attempts
-        try:
-            qty_el = self.q(3).until(EC.presence_of_element_located((By.XPATH, qty_xpath)))
-            final_qty = safe_get_qty(qty_el)
-            
-            # If final_qty is still 0 but we clicked Add successfully earlier, assume 1
-            if final_qty == 0:
-                 self.logger.warning("Could not read final quantity text (got 0/empty), assuming 1 since 'Add' was clicked.")
-                 final_qty = 1
-            
-            max_available_qty = max(max_available_qty, final_qty)
-            
-            if final_qty >= desired_qty:
-                self.logger.success(f"FINAL QUANTITY: {final_qty}/{desired_qty} - SUCCESS")
-            else:
-                self.logger.warning(f"FINAL QUANTITY: {final_qty}/{desired_qty} - LESS THAN DESIRED")
-            
-            # Only record warnings if there's an actual quantity issue
-            if final_qty < desired_qty: # use final_qty instead of max_available_qty for final check
-                if not self.allow_less_qty:
-                    # If allow_less_qty is disabled, this is a fatal error
-                    self.logger.error(f"[STOCK] Quantity {final_qty} < desired {desired_qty} and allow_less_qty is disabled - stopping all workers")
-                    self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
-                    self._fatal("QTY_TOO_LOW")  # This will raise FatalBotError
-                else:
-                    # If allow_less_qty is enabled, just record a warning (not fatal)
-                    self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
-                    self.logger.warning(f"[STOCK] Available quantity {final_qty} < desired {desired_qty} but allow_less_qty is enabled - continuing")
-            # If final_qty >= desired_qty, no warning needed - quantity is sufficient
-        except FatalBotError:
-            raise  # Re-raise fatal errors immediately
+        except FatalBotError: raise
         except Exception as e:
-            # If verification REALLY fails (element gone?), don't crash if we allow less qty
-            if self.allow_less_qty:
-                 self.logger.warning(f"Quantity verification error: {e}. Continuing assuming successful add.")
+            self.logger.error(f"Failed during Add interaction: {e}")
+            self._fatal("ADD_INTERACTION_FAILED")
+
+        # 5. QUANTITY ADJUSTMENT LOOP
+        # We need to find the input/div showing current qty and the + button
+        qty_xpath = "//div[contains(@class,'r-1cenzwm')]" # The number display
+        plus_xpath = "//div[contains(text(), '+') or text()='+'][contains(@class, 'r-1777fci')]" # The plus button (often styled same as Add)
+        
+        current_qty = 0
+        
+        # Helper to read quantity
+        def get_current_qty():
+            try:
+                els = self.driver.find_elements(By.XPATH, qty_xpath)
+                for el in els:
+                    if el.is_displayed():
+                        txt = el.text.strip()
+                        if txt.isdigit(): return int(txt)
+                return 0
+            except: return 0
+
+        # Initial read
+        current_qty = get_current_qty()
+        if current_qty == 0:
+            # If still 0, maybe "Add" didn't register? Try reading anyway, sometimes it takes a moment
+            time.sleep(1)
+            current_qty = get_current_qty()
+
+        self.logger.info(f"Current Qty on page: {current_qty} | Desired: {desired_qty}")
+
+        # Loop to increase
+        retries = 0
+        while current_qty < desired_qty and retries < 10:
+            # Find plus button
+            plus_btns = self.driver.find_elements(By.XPATH, "(//div[contains(@style,'rgb(133, 60, 14)')])[last()]") # Usually the right-most, colored button
+            if not plus_btns:
+                 # Fallback plus xpath
+                 plus_btns = self.driver.find_elements(By.XPATH, "//button[contains(text(), '+')]")
+            
+            if plus_btns:
+                # Click +
+                try:
+                    self.driver.execute_script("arguments[0].click();", plus_btns[-1])
+                    time.sleep(0.8) # Wait for update
+                except: pass
             else:
-                 self.logger.error(f"Could not verify final quantity: {e}")
-                 self._fatal("QTY_VERIFICATION_FAILED")
+                self.logger.warning("Plus (+) button not found to increase qty")
+                break
+                
+            # Re-read
+            new_qty = get_current_qty()
+            if new_qty > current_qty:
+                current_qty = new_qty
+                self.logger.info(f"Increased qty to {current_qty}")
+            else:
+                # Stopped increasing (stock limit?)
+                self.logger.warning("Quantity did not increase after click (Stock limit reached?)")
+                retries += 1
+        
+        # 6. FINAL STRICT VERIFICATION
+        final_qty = get_current_qty()
+        self.logger.info(f"Final Verified Quantity: {final_qty}")
+        
+        if final_qty < desired_qty:
+            if not self.allow_less_qty:
+                self.logger.error(f"FAILURE: Got {final_qty}, needed {desired_qty}. strict_mode=ON")
+                self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
+                self._fatal("QTY_TOO_LOW")
+            else:
+                 self.logger.warning(f"Got {final_qty}, needed {desired_qty}. strict_mode=OFF -> Continuing")
+                 self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
+        else:
+            self.logger.success(f"Quantity requirement met: {final_qty}")
 
     # ------------------------------------------------------------------
     # Add all products
@@ -1980,7 +1905,7 @@ class FlipkartSniper:
         time.sleep(2)
         # EXTRACT ORDER ID
         try:
-            self.driver.get("https://www.flipkart.com/rv/orders?isSkipOc=true")
+            self.get_with_retry("https://www.flipkart.com/rv/orders?isSkipOc=true")
             time.sleep(2)
             
             # Check if orders page is open (mark as success even if order ID extraction fails)
@@ -2265,7 +2190,7 @@ class FlipkartSniper:
                 return self.fatal_code or "ADD_PRODUCTS_FAILED"
 
             # 5) Apply cart deal (Deal Booster) - ALWAYS try to apply deals
-            time.sleep(4)
+            time.sleep(1.5)
             self.step_apply_cart_deals(self.deal_keyword)  # Works with or without keyword
             if self.fatal_error:
                 return self.fatal_code or "DEAL_APPLY_FAILED"
@@ -2273,7 +2198,7 @@ class FlipkartSniper:
 
             # 6) Apply coupon (MANUAL or AUTO APPLY)
             if self.coupon not in ("", None, "None"):
-                time.sleep(2)
+                time.sleep(1.5)
                 self.step_apply_coupon(use_coupon=True)
                 if self.fatal_error:
                     return self.fatal_code or "COUPON_FAILED"
