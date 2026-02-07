@@ -5266,9 +5266,14 @@ let stockWarningData = null;
 // Logs viewer - simplified version
 function highlightLogs(text) {
     if (!text) return 'No logs yet.';
-    // Simply escape HTML and return
+    // Replace literal \n strings (backslash followed by n) with actual newlines
+    // This handles cases where log messages contain literal \n characters
+    // The regex matches a literal backslash followed by 'n'
+    text = text.replace(/\\n/g, '\n');
+    // Escape HTML to prevent XSS attacks
     var div = document.createElement('div');
     div.textContent = text;
+    // Return escaped HTML - newlines will be preserved in <pre> tags
     return div.innerHTML;
 }
 
@@ -5351,7 +5356,14 @@ function refreshLogs(selectedFile) {
             if (viewEl && data.content !== lastLogContent) {
                 lastLogContent = data.content;
                 
-                viewEl.innerHTML = highlightLogs(data.content || 'No logs yet.');
+                // Replace literal \n strings with actual newlines before displaying
+                // Handle all levels of escaping: \\\\n, \\n, \n -> actual newline
+                var content = (data.content || 'No logs yet.');
+                // Use regex to match one or more backslashes followed by 'n' and replace with newline
+                // This handles \n, \\n, \\\n, etc.
+                content = content.replace(/\\(\\\\)*n/g, '\n');
+                // Use textContent directly on <pre> to preserve newlines and escape HTML automatically
+                viewEl.textContent = content;
                 viewEl.scrollTop = viewEl.scrollHeight;
                 
                 if (statsEl) statsEl.textContent = 'Logs loaded';
@@ -7618,12 +7630,21 @@ def get_local_ip():
 
 
 def log(msg):
+    # #region agent log
+    import json; log_file = r"c:\Users\zgarm\OneDrive\Desktop\flipkart automation\.cursor\debug.log"; open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"app.py:7620","message":"log() function entry","data":{"msg":repr(msg),"has_backslash_n":"\\n" in str(msg),"hypothesisId":"B"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+    # #endregion
     LOGS.append(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+    # #region agent log
+    open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"app.py:7621","message":"log() added to LOGS","data":{"log_entry":repr(LOGS[-1] if LOGS else ""),"has_backslash_n":"\\n" in (LOGS[-1] if LOGS else ""),"hypothesisId":"B"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+    # #endregion
     print(msg)
     sys.stdout.flush()
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(msg + "\n")
+            # #region agent log
+            open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"app.py:7626","message":"log() written to file","data":{"written":repr(msg + "\\n"),"has_backslash_n":"\\n" in (msg + "\\n"),"hypothesisId":"B"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+            # #endregion
     except Exception:
         pass
 
@@ -8521,9 +8542,23 @@ def list_logs_api():
             target = os.path.join(LOGS_DIR, os.path.basename(selected))
             if os.path.exists(target):
                 with open(target, "r", encoding="utf-8", errors="ignore") as f:
-                    lines = f.readlines()
+                    content = f.read()  # Read entire content as raw string
+                
+                # Replace literal \n strings (backslash followed by n) with actual newlines
+                # This must be done BEFORE splitting, as the file may contain literal \n sequences
+                # Handle multiple levels of escaping: \\\\n -> \\n -> \n -> actual newline
+                import re
+                # Replace all occurrences of backslash followed by n with actual newline
+                # Use regex to match literal backslash-n sequences
+                content = re.sub(r'\\+n', '\n', content)  # Matches \n, \\n, \\\n, etc. and converts to newline
+                
+                # Get last 800 lines by splitting on actual newlines
+                lines = content.split('\n')
                 tail = lines[-800:] if len(lines) > 800 else lines
-                content = "".join(tail)
+                content = "\n".join(tail)
+                # #region agent log
+                import json; log_file = r"c:\Users\zgarm\OneDrive\Desktop\flipkart automation\.cursor\debug.log"; sample_content = content[:200] if len(content) > 200 else content; open(log_file, "a", encoding="utf-8").write(json.dumps({"location":"app.py:8526","message":"API logs content prepared","data":{"content_sample":repr(sample_content),"has_backslash_n":"\\n" in content,"content_length":len(content),"hypothesisId":"D","runId":"post-fix-v3"},"timestamp":int(__import__("time").time()*1000)})+"\n")
+                # #endregion
 
         return jsonify({"files": files, "selected": selected, "content": content})
     except Exception as e:
@@ -8549,7 +8584,9 @@ def logs_live():
         if os.path.exists(LOG_FILE):
             with open(LOG_FILE, "r", encoding="utf-8") as f:
                 lines = f.readlines()
-            return jsonify([line.strip() for line in lines[-2000:]])
+            # Strip lines and replace literal \n, then join into one string
+            log_lines = [line.strip().replace("\\n", "\n") for line in lines[-2000:]]
+            return jsonify(["\n".join(log_lines)])
         return jsonify([])
     except Exception as e:
         return jsonify([f"Error reading logs: {e}"])
