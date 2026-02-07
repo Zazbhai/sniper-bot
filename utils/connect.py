@@ -612,9 +612,10 @@ class ConnectRunner:
 
         try:
             # Clean up any orphan Chrome processes before starting (Linux VPS optimization)
-            if platform.system() == "Linux":
-                kill_orphan_chrome()
-                time.sleep(0.5)  # Brief pause to ensure cleanup completes
+            # DISABLED: Unsafe in parallel execution (kills other workers' browsers)
+            # if platform.system() == "Linux":
+            #     kill_orphan_chrome()
+            #     time.sleep(0.5)  # Brief pause to ensure cleanup completes
             
             # Create session ID for this worker
             session_id = f"worker_{index}_{int(time.time())}"
@@ -649,9 +650,10 @@ class ConnectRunner:
                 try:
                     driver_init_attempts += 1
                     # Clean up orphan processes before each attempt (Linux VPS)
-                    if platform.system() == "Linux" and driver_init_attempts > 1:
-                        kill_orphan_chrome()
-                        time.sleep(1)  # Wait for cleanup
+                    # DISABLED: Unsafe in parallel execution
+                    # if platform.system() == "Linux" and driver_init_attempts > 1:
+                    #     kill_orphan_chrome()
+                    #     time.sleep(1)  # Wait for cleanup
                     
                     # Create driver (same logic as main.py run() method)
                     # Auto-detect using Selenium Manager (no explicit path check needed)
@@ -887,6 +889,20 @@ class ConnectRunner:
             # Simplify crash error to just "CRASH" for failure.csv
             err = "CRASH"
             
+            # --- CRITICAL DEBUGGING: Log actual crash reason to file ---
+            try:
+                import traceback
+                crash_log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs", "crash_details.log")
+                timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+                with open(crash_log_path, "a", encoding="utf-8") as f:
+                    f.write(f"\n[{timestamp}] WORKER #{index+1} CRASHED for account {email}:\n")
+                    f.write(f"Error: {str(e)}\n")
+                    f.write(traceback.format_exc())
+                    f.write("-" * 50 + "\n")
+            except:
+                pass
+            # -----------------------------------------------------------
+
             screenshot_url = getattr(sniper, 'screenshot_url', 'NONE') if sniper else 'NONE'
             restored = restore_coupon(popped_coupon or coupon)
             if not restored:
