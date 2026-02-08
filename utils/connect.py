@@ -787,6 +787,10 @@ class ConnectRunner:
             if url is None:
                 url = "NONE"
             
+            # If error is generic NOT_FOUND but we have a specific fatal code, use that
+            if error == "NOT_FOUND" and sniper and sniper.fatal_code:
+                error = sniper.fatal_code
+            
             screenshot_url = getattr(sniper, 'screenshot_url', url) if sniper else url
 
             # Special handling: QTY_TOO_LOW → stop all workers immediately

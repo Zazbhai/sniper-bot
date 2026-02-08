@@ -453,7 +453,7 @@ class FlipkartSniper:
         self._fatal(error_code)
         return None
     
-    def find_clickable_with_retry(self, xpaths, timeout=5, retries=1, error_code="ELEMENT_NOT_FOUND"):
+    def find_clickable_with_retry(self, xpaths, timeout=3, retries=1, error_code="ELEMENT_NOT_FOUND"):
         """
         Find clickable element using multiple XPath fallbacks with a single quick pass.
         Uses find_elements and fails fast.
@@ -614,7 +614,7 @@ class FlipkartSniper:
         
         removed_count = 0
         start_time = time.time()
-        timeout = 2  # 4 seconds timeout
+        timeout = 4  # 4 seconds timeout
         
         while (time.time() - start_time) < timeout:
             action_taken = False
@@ -749,7 +749,7 @@ class FlipkartSniper:
                 if attempt == 2: self._fatal("PAGE_LOAD_FAILED")
                 time.sleep(2)
         
-        time.sleep(2.5) # Let React hydration finish
+        time.sleep(1.5) # Let React hydration finish
         
         # 2. Extract Product Name (Best Effort)
         product_name = "Unknown Product"
@@ -808,7 +808,7 @@ class FlipkartSniper:
             
             # 4. AGGRESSIVE CLICKING
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", add_btn)
-            time.sleep(0.5)
+            time.sleep(0.3)
             
             # Force JS Click first (most reliable)
             self.logger.info(f"Found Add button, executing JS click...")
@@ -819,7 +819,7 @@ class FlipkartSniper:
             except: pass
             
             self.logger.info("Click command sent. Waiting for quantity controls...")
-            time.sleep(2) # Wait for "Add" to become quantity controls
+            time.sleep(1) # Wait for "Add" to become quantity controls
             
         except FatalBotError: raise
         except Exception as e:
@@ -866,7 +866,7 @@ class FlipkartSniper:
                 # Click +
                 try:
                     self.driver.execute_script("arguments[0].click();", plus_btns[-1])
-                    time.sleep(0.8) # Wait for update
+                    time.sleep(1.7) # Wait for update
                 except: pass
             else:
                 self.logger.warning("Plus (+) button not found to increase qty")
@@ -886,14 +886,10 @@ class FlipkartSniper:
         final_qty = get_current_qty()
         self.logger.info(f"Final Verified Quantity: {final_qty}")
         
-        if final_qty < desired_qty:
-            if not self.allow_less_qty:
-                self.logger.error(f"FAILURE: Got {final_qty}, needed {desired_qty}. strict_mode=ON")
-                self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
-                self._fatal("QTY_TOO_LOW")
-            else:
-                 self.logger.warning(f"Got {final_qty}, needed {desired_qty}. strict_mode=OFF -> Continuing")
-                 self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
+        if final_qty != desired_qty:
+             self.logger.error(f"FAILURE: Got {final_qty}, needed {desired_qty}. STRICT MODE ENFORCED")
+             self._record_stock_warning(product_name, product_url, desired_qty, final_qty)
+             self._fatal("QTY_MISMATCH")
         else:
             self.logger.success(f"Quantity requirement met: {final_qty}")
 
