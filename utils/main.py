@@ -1489,6 +1489,9 @@ class FlipkartSniper:
         # IF APPLY BUTTON FOUND: Click it immediately and exit
         # Otherwise: Enter coupon manually
         # -------------------------------------------------------------
+        # -------------------------------------------------------------
+        # IF APPLY BUTTON FOUND: Click it immediately
+        # -------------------------------------------------------------
         if apply_button_found_after_open and apply_button_element:
             # Apply button exists - coupon is pre-selected, just click it!
             try:
@@ -1497,87 +1500,47 @@ class FlipkartSniper:
                 self.apply_button_used = True
                 self.logger.success("APPLY BUTTON CLICKED — COUPON APPLIED!")
                 time.sleep(2)
-
-                # Check for errors after clicking - look for RED error text, not just any text
-                try:
-                    # Find all divs with the common class that might contain errors or buttons
-                    potential_errors = self.driver.find_elements(
-                        By.XPATH,
-                        "//div[contains(@class,'css-1rynq56')]"
-                    )
-                    
-                    actual_error = None
-                    for elem in potential_errors:
-                        try:
-                            if elem.is_displayed():
-                                text = elem.text.strip().lower()
-                                style = elem.get_attribute("style") or ""
-                                
-                                # Check if this is an ERROR by checking for:
-                                # 1. Red color (rgb(198, 4, 36) or similar red colors)
-                                # 2. Error-related text
-                                is_red = "rgb(198, 4, 36)" in style or "rgb(248, 81, 73)" in style or "rgb(255, 0, 0)" in style
-                                has_error_text = any(keyword in text for keyword in ['invalid', 'expired', 'max usage', 'maximum usage', 'not applicable', 'not valid', 'error'])
-                                
-                                # Only treat as error if BOTH red color AND error text are present
-                                if is_red and has_error_text:
-                                    actual_error = elem
-                                    break
-                        except:
-                            continue
-                    
-                    if actual_error:
-                        msg = actual_error.text.strip()
-                        self.logger.error(f"COUPON ERROR: {msg}")
-                        if "max usage" in msg.lower() or "maximum usage" in msg.lower():
-                            self._fatal("COUPON_MAX_USAGE_LIMIT")
-                        else:
-                            self._fatal("INVALID_COUPON")
-                    else:
-                        self.logger.success("Apply button clicked successfully - no errors detected")
-                        
-                except NoSuchElementException:
-                    self.logger.success("Apply button clicked successfully - no errors detected")
-                
-                self.logger.step("APPLY_COUPON", "SUCCESS")
-                try:
-                    btn = self.driver.find_element(By.XPATH, "//a[contains(@class,'jlLn4z')]")
-                    self.driver.execute_script("arguments[0].click();", btn)
-                except Exception as e:
-                    self._fatal("BACK_ICON_NOT_FOUND")
-                        
-                return  # Exit early - coupon applied successfully
             except FatalBotError:
                 raise
             except Exception as e:
                 self.logger.warning(f"Failed to click pre-selected Apply button: {e}, will try manual entry...")
                 # Fall through to manual entry
-        
+
         # -------------------------------------------------------------
-        # ENTER COUPON MANUALLY (only if no Apply button was found/clicked)
+        # ALWAYS ENTER COUPON MANUALLY (regardless of whether Apply button was found/clicked)
         # -------------------------------------------------------------
         if opener:
             try:
-                coupon_input = self.q(5).until(EC.presence_of_element_located((
-                    By.XPATH, "//input[@placeholder='Enter coupon code' or contains(@placeholder,'coupon')]"
-                )))
-                self.logger.info(f"Entering coupon code: {self.coupon}")
-                self.clear_and_send(coupon_input, self.coupon)
-                self.logger.info("Coupon code entered")
-                self.coupon_filled = True
-
-                # Find Apply button
-                self.logger.info("Finding and clicking Apply button...")
-                apply_btn = self.q(5).until(EC.any_of(
-                    EC.element_to_be_clickable((By.XPATH, "//div[contains(@class,'css-1rynq56') and normalize-space(text())='Add Coupon']")),
-                    EC.element_to_be_clickable((By.XPATH, "//div[text()='Apply']")),
-                ))
-                self.safe_click(apply_btn)
+                # If we already clicked apply successfully and no error appeared, we might technically be done
+                # BUT user requested to ALWAYS enter coupon code.
+                # However, if the coupon is already applied via the button, the input field might disappear or change state.
+                # We will try to find the input and enter it if possible.
                 
-                self.logger.success("APPLY BUTTON CLICKED — COUPON APPLIED!")
-                time.sleep(2)
+                try:
+                    coupon_input = self.q(3).until(EC.presence_of_element_located((
+                        By.XPATH, "//input[@placeholder='Enter coupon code' or contains(@placeholder,'coupon')]"
+                    )))
+                    self.logger.info(f"Entering coupon code manually (User Request): {self.coupon}")
+                    # If field has text, maybe clear it first?
+                    self.clear_and_send(coupon_input, self.coupon)
+                    self.logger.info("Coupon code entered manually")
+                    self.coupon_filled = True
+                    
+                    # Find and click Apply AGAIN (since we just re-entered it)
+                    self.logger.info("Finding and clicking Apply button (Manual Entry)...")
+                    apply_btn = self.q(3).until(EC.any_of(
+                        EC.element_to_be_clickable((By.XPATH, "//div[contains(@class,'css-1rynq56') and normalize-space(text())='Add Coupon']")),
+                        EC.element_to_be_clickable((By.XPATH, "//div[text()='Apply']")),
+                    ))
+                    self.safe_click(apply_btn)
+                    self.logger.success("APPLY BUTTON CLICKED (Manual) — COUPON APPLIED!")
+                    time.sleep(2)
+                    
+                except TimeoutException:
+                    self.logger.info("Coupon input field not found (maybe applied successfully via pre-selected button?), continuing...")
 
                 # Detect coupon errors - look for RED error text, not just any text
+                # ... (Reuse the error detection logic) ...
                 try:
                     # Find all divs with the common class
                     potential_errors = self.driver.find_elements(
